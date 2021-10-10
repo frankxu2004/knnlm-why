@@ -215,6 +215,17 @@ def transformer_lm_big(args):
     base_lm_architecture(args)
 
 
+@register_model_architecture('transformer_lm', 'transformer_lm_wikibpe')
+def transformer_lm_wikibpe(args):
+    args.decoder_layers = getattr(args, 'decoder_layers', 16)
+    args.decoder_attention_heads = getattr(args, 'decoder_attention_heads', 8)
+    args.dropout = getattr(args, 'dropout', 0.3)
+    args.attention_dropout = getattr(args, 'attention_dropout', 0.1)
+    args.activation_dropout = getattr(args, 'activation_dropout', 0.1)
+    args.no_decoder_final_norm = getattr(args, 'no_decoder_final_norm', True)
+    transformer_lm_big(args)
+
+
 @register_model_architecture('transformer_lm', 'transformer_lm_wiki103')
 @register_model_architecture('transformer_lm', 'transformer_lm_baevski_wiki103')
 def transformer_lm_baevski_wiki103(args):
