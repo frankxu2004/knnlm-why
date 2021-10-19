@@ -46,7 +46,9 @@ class KNN_Dstore(object):
 
             if not args.no_load_keys:
                 del self.keys
-                self.keys_from_memmap = np.memmap(args.dstore_filename+'_keys.npy', dtype=np.float32, mode='r', shape=(self.dstore_size, self.dimension))
+                self.keys_from_memmap = np.memmap(args.dstore_filename+'_keys.npy',
+                                                  dtype=np.float16 if args.dstore_fp16 else np.float32, mode='r',
+                                                  shape=(self.dstore_size, self.dimension))
                 self.keys = np.zeros((self.dstore_size, self.dimension), dtype=np.float16 if args.dstore_fp16 else np.float32)
                 self.keys = self.keys_from_memmap[:]
                 self.keys = self.keys.astype(np.float16 if args.dstore_fp16 else np.float32)

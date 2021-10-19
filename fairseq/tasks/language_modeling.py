@@ -107,7 +107,7 @@ class LanguageModelingTask(FairseqTask):
         parser.add_argument('--knn-sim-func', default=None, type=str,
                             help='similarity function to use for knns')
         parser.add_argument('--faiss-metric-type', default='l2', type=str,
-                            help='the distance metric for faiss')
+                            help='the distance metric for faiss, l2 or ip')
         parser.add_argument('--no-load-keys', default=False, action='store_true',
                             help='do not load keys')
         parser.add_argument('--dstore-fp16', default=False, action='store_true',

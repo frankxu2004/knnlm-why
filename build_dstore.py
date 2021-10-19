@@ -15,6 +15,7 @@ parser.add_argument('--ncentroids', type=int, default=4096, help='number of cent
 parser.add_argument('--code_size', type=int, default=64, help='size of quantized vectors')
 parser.add_argument('--probe', type=int, default=8, help='number of clusters to query')
 parser.add_argument('--faiss_index', type=str, help='file to write the faiss index')
+parser.add_argument('--metric', type=str, default='l2', help='distance metric of choice, l2 or ip')
 parser.add_argument('--num_keys_to_add_at_a_time', default=1000000, type=int,
                     help='can only load a certain amount of data to memory at a time.')
 parser.add_argument('--starting_point', type=int, help='index to start adding keys at')
@@ -31,9 +32,10 @@ else:
 
 if not os.path.exists(args.faiss_index+".trained"):
     # Initialize faiss index
-    quantizer = faiss.IndexFlatL2(args.dimension)
+    metric = faiss.METRIC_L2 if args.metric == 'l2' else faiss.METRIC_INNER_PRODUCT
+    quantizer = faiss.IndexFlatL2(args.dimension) if args.metric == 'l2' else faiss.IndexFlatIP(args.dimension)
     index = faiss.IndexIVFPQ(quantizer, args.dimension,
-        args.ncentroids, args.code_size, 8)
+        args.ncentroids, args.code_size, 8, metric)
     index.nprobe = args.probe
 
     print('Training Index')

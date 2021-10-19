@@ -185,7 +185,7 @@ def main(parsed_args):
                 hypo = hypos_i[0]
                 if args.save_knnlm_dstore:
                     shape = hypo['dstore_keys'].shape
-                    if shape[0] == args.tokens_per_sample:
+                    if shape[0] == args.tokens_per_sample and shape[0] == hypo['tokens'].shape[0]:
                         if dstore_idx + shape[0] > args.dstore_size:
                             print('DSTORE SIZE EXCEEDED!!! TRUNCATING..')
                             shape = [args.dstore_size - dstore_idx]
