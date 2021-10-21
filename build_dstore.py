@@ -34,6 +34,7 @@ if not os.path.exists(args.faiss_index+".trained"):
     # Initialize faiss index
     metric = faiss.METRIC_L2 if args.metric == 'l2' else faiss.METRIC_INNER_PRODUCT
     quantizer = faiss.IndexFlatL2(args.dimension) if args.metric == 'l2' else faiss.IndexFlatIP(args.dimension)
+    print(metric, quantizer)
     index = faiss.IndexIVFPQ(quantizer, args.dimension,
         args.ncentroids, args.code_size, 8, metric)
     index.nprobe = args.probe
