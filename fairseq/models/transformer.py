@@ -583,6 +583,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         embed_dim = args.decoder_embed_dim
         self.embed_dim = embed_dim
         self.output_embed_dim = args.decoder_output_dim
+        self.pseudo_vocab_ratio = args.pseudo_vocab_ratio
 
         self.padding_idx = embed_tokens.padding_idx
         self.max_target_positions = args.max_target_positions
@@ -639,9 +640,17 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 tie_proj=args.tie_adaptive_proj,
             )
         elif not self.share_input_output_embed:
-            self.embed_out = nn.Parameter(
-                torch.Tensor(len(dictionary), self.output_embed_dim)
-            )
+            if self.pseudo_vocab_ratio == 1:
+                self.embed_out = nn.Parameter(
+                    torch.Tensor(len(dictionary), self.output_embed_dim)
+                )
+            else:
+                num_special_tokens = dictionary.nspecial
+                self.embed_out = nn.Parameter(
+                    torch.Tensor(num_special_tokens + self.pseudo_vocab_ratio * (len(dictionary)-num_special_tokens),
+                                 self.output_embed_dim)
+                )
+
             nn.init.normal_(self.embed_out, mean=0, std=self.output_embed_dim ** -0.5)
 
         if args.decoder_normalize_before and not getattr(

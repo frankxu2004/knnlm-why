@@ -115,6 +115,9 @@ class TransformerLanguageModel(FairseqLanguageModel):
                             help='add layernorm to embedding')
         parser.add_argument('--no-scale-embedding', action='store_true',
                             help='if True, dont scale embeddings')
+        # args for KNN-Distill
+        parser.add_argument('--pseudo-vocab-ratio', type=int, default=1,
+                            help='k|V| output embedding matrix')
         # fmt: on
 
     @classmethod
