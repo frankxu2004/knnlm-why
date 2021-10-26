@@ -7,6 +7,7 @@ import math
 
 import torch.nn.functional as F
 import torch
+from torch import nn
 
 from fairseq import metrics, utils
 from fairseq.criterions import register_criterion
@@ -19,24 +20,30 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
     def __init__(self, args, task):
         super().__init__(args, task)
         num_special_tokens = task.target_dictionary.nspecial
-        coef = torch.zeros((num_special_tokens + args.pseudo_vocab_ratio *
-                            (len(task.target_dictionary) - num_special_tokens), len(task.target_dictionary)),
-                           dtype=torch.bool)
-        for i in range(coef.shape[1]):
+
+        num_out_emb_entries = num_special_tokens + args.pseudo_vocab_ratio * (len(task.target_dictionary) - num_special_tokens)
+
+        indexes = []
+        values = []
+        for i in range(len(task.target_dictionary)):
             if i < num_special_tokens:
-                coef[i, i] = 1
+                indexes.append((i, i))
+                values.append(1.)
             else:
-                coef[range()]
-        print(coef.shape)
-        exit()
+                for j in range(num_special_tokens+args.pseudo_vocab_ratio*(i-num_special_tokens),
+                           num_special_tokens+args.pseudo_vocab_ratio*(i-num_special_tokens+1)):
+
+                    indexes.append((i, j))
+                    values.append(1.)
+        self.coef = torch.sparse_coo_tensor(list(zip(*indexes)), values, (len(task.target_dictionary), num_out_emb_entries))
+        self.coef = nn.Parameter(self.coef, requires_grad=False)
+
 
     def compute_loss(self, model, net_output, sample, reduce=True):
         lprobs = model.get_normalized_probs(net_output, log_probs=False)
         lprobs = lprobs.view(-1, lprobs.size(-1))
-        print(lprobs.shape)
+        lprobs = torch.log(torch.sparse.mm(self.coef, lprobs.T).T)
         target = model.get_targets(sample, net_output).view(-1)
-        print(target.shape)
-        print(self.padding_idx)
         loss = F.nll_loss(
             lprobs,
             target,
