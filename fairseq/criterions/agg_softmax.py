@@ -21,7 +21,8 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
         super().__init__(args, task)
         num_special_tokens = task.target_dictionary.nspecial
 
-        num_out_emb_entries = num_special_tokens + args.pseudo_vocab_ratio * (len(task.target_dictionary) - num_special_tokens)
+        num_out_emb_entries = num_special_tokens + args.pseudo_vocab_ratio * (
+                    len(task.target_dictionary) - num_special_tokens)
 
         indexes = []
         values = []
@@ -30,14 +31,14 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
                 indexes.append((i, i))
                 values.append(1.)
             else:
-                for j in range(num_special_tokens+args.pseudo_vocab_ratio*(i-num_special_tokens),
-                           num_special_tokens+args.pseudo_vocab_ratio*(i-num_special_tokens+1)):
-
+                for j in range(num_special_tokens + args.pseudo_vocab_ratio * (i - num_special_tokens),
+                               num_special_tokens + args.pseudo_vocab_ratio * (i - num_special_tokens + 1)):
                     indexes.append((i, j))
                     values.append(1.)
-        self.coef = torch.sparse_coo_tensor(list(zip(*indexes)), values, (len(task.target_dictionary), num_out_emb_entries))
-        self.coef = nn.Parameter(self.coef, requires_grad=False)
-
+        self.coef = torch.sparse_coo_tensor(list(zip(*indexes)), values,
+                                            (len(task.target_dictionary), num_out_emb_entries))
+        if torch.cuda.is_available() and not args.cpu:
+            self.coef = self.coef.cuda()
 
     def compute_loss(self, model, net_output, sample, reduce=True):
         lprobs = model.get_normalized_probs(net_output, log_probs=False)

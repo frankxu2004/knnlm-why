@@ -51,9 +51,7 @@ class Trainer(object):
         self._criterion = criterion
         self._model = model
         if args.fp16:
-            # Sparse MM do not support fp16
-            if not isinstance(self._criterion, fairseq.criterions.agg_softmax.AggSoftmaxCriterion):
-                self._criterion = self._criterion.half()
+            self._criterion = self._criterion.half()
             self._model = self._model.half()
         self._criterion = self._criterion.to(device=self.device)
         self._model = self._model.to(device=self.device)
