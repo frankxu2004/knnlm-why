@@ -19,32 +19,46 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
 
     def __init__(self, args, task):
         super().__init__(args, task)
-        num_special_tokens = task.target_dictionary.nspecial
-
-        num_out_emb_entries = num_special_tokens + args.pseudo_vocab_ratio * (
-                    len(task.target_dictionary) - num_special_tokens)
+        self.num_special_tokens = task.target_dictionary.nspecial
+        self.vocab_size = len(task.target_dictionary)
+        self.ratio = args.pseudo_vocab_ratio
+        num_out_emb_entries = self.num_special_tokens + args.pseudo_vocab_ratio * (
+                    self.vocab_size - self.num_special_tokens)
 
         indexes = []
         values = []
         for i in range(len(task.target_dictionary)):
-            if i < num_special_tokens:
+            if i < self.num_special_tokens:
                 indexes.append((i, i))
                 values.append(1.)
             else:
-                for j in range(num_special_tokens + args.pseudo_vocab_ratio * (i - num_special_tokens),
-                               num_special_tokens + args.pseudo_vocab_ratio * (i - num_special_tokens + 1)):
+                for j in range(self.num_special_tokens + self.ratio * (i - self.num_special_tokens),
+                               self.num_special_tokens + self.ratio * (i - self.num_special_tokens + 1)):
                     indexes.append((i, j))
                     values.append(1.)
         self.coef = torch.sparse_coo_tensor(list(zip(*indexes)), values,
-                                            (len(task.target_dictionary), num_out_emb_entries))
+                                            (self.vocab_size, num_out_emb_entries))
         if torch.cuda.is_available() and not args.cpu:
             self.coef = self.coef.cuda()
 
     def compute_loss(self, model, net_output, sample, reduce=True):
         lprobs = model.get_normalized_probs(net_output, log_probs=False)
         lprobs = lprobs.view(-1, lprobs.size(-1))
-        lprobs = torch.log(torch.sparse.mm(self.coef, lprobs.T).T)
+        lprobs = torch.log(torch.clamp(torch.sparse.mm(self.coef, lprobs.T).T, min=1e-9)) #bsz x vocab
         target = model.get_targets(sample, net_output).view(-1)
+        # agg_probs = torch.full((target.size(0), self.ratio), -10000).cuda()
+        # for idx, t in enumerate(target):
+        #     if t < self.num_special_tokens:
+        #         agg_probs[idx, 0] = lprobs[idx, t]
+        #     else:
+        #         agg_probs[idx, range(self.ratio)] = lprobs[idx, range(self.num_special_tokens + self.ratio * (t - self.num_special_tokens),
+        #                        self.num_special_tokens + self.ratio * (t - self.num_special_tokens + 1))]
+        # agg_probs = torch.logsumexp(agg_probs, dim=-1)
+        # if reduce:
+        #     loss = torch.sum(-agg_probs[target != self.padding_idx])
+        # else:
+        #     loss = -agg_probs[target != self.padding_idx]
+
         loss = F.nll_loss(
             lprobs,
             target,
