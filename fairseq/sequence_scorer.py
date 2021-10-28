@@ -74,6 +74,7 @@ class SequenceScorer(object):
             batched = batch_for_softmax(decoder_out, orig_target)
             probs, idx = None, 0
             for i, (bd, tgt, is_single) in enumerate(batched):
+                print(bd[0].shape)
                 sample['target'] = tgt
                 curr_prob = model.get_normalized_probs(bd, log_probs=len(models) == 1, sample=sample).data
 
@@ -95,6 +96,7 @@ class SequenceScorer(object):
                 dstore = kwargs['knn_dstore']
                 # TxBxC
                 queries = bd[1][self.args.knn_keytype]
+                exit()
                 if len(models) != 1:
                     raise ValueError('Only knn *log* probs are supported.')
 

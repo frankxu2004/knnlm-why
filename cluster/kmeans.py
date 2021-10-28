@@ -44,8 +44,3 @@ kmeans = faiss.Kmeans(vec_dim, ncentroids, niter=niter, verbose=verbose, gpu=Tru
 kmeans.train(to_cluster)
 
 np.save('checkpoints/wikitext103-bpe/centroids.npy', kmeans.centroids)
-
-D, I = kmeans.index.search(keys[:first_zero_idx], 1)
-
-np.save('checkpoints/wikitext103-bpe/dist.npy', D)
-np.save('checkpoints/wikitext103-bpe/centroid_ids.npy', I)
