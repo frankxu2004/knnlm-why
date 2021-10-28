@@ -11,9 +11,9 @@ python train.py --task language_modeling \
 
 ## eval
 python eval_lm.py data-bin/wikitext103-bpe \
-    --path checkpoints/wikitext103-bpe/checkpoint_best.pt \
+    --path checkpoints/wikitext103-bpe-kv2/checkpoint_best.pt \
     --sample-break-mode complete --max-tokens 3072 \
-    --context-window 2560 --softmax-batch 1024 \
+    --context-window 2560 --softmax-batch 1024 --pseudo-vocab-ratio 2 \
     --gen-subset valid --bpe subword_nmt --remove-bpe
 
 

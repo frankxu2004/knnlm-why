@@ -22,24 +22,32 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
         self.num_special_tokens = task.target_dictionary.nspecial
         self.vocab_size = len(task.target_dictionary)
         self.ratio = args.pseudo_vocab_ratio
-        num_out_emb_entries = self.num_special_tokens + args.pseudo_vocab_ratio * (
-                    self.vocab_size - self.num_special_tokens)
+        self.coef = self.initialize_projection_matrix(task.target_dictionary, args.pseudo_vocab_ratio)
+        if torch.cuda.is_available() and not args.cpu:
+            self.coef = self.coef.cuda()
+
+    @staticmethod
+    def initialize_projection_matrix(dictionary, ratio):
+        num_special_tokens = dictionary.nspecial
+        vocab_size = len(dictionary)
+
+        num_out_emb_entries = num_special_tokens + ratio * (
+                    vocab_size - num_special_tokens)
 
         indexes = []
         values = []
-        for i in range(len(task.target_dictionary)):
-            if i < self.num_special_tokens:
+        for i in range(vocab_size):
+            if i < num_special_tokens:
                 indexes.append((i, i))
                 values.append(1.)
             else:
-                for j in range(self.num_special_tokens + self.ratio * (i - self.num_special_tokens),
-                               self.num_special_tokens + self.ratio * (i - self.num_special_tokens + 1)):
+                for j in range(num_special_tokens + ratio * (i - num_special_tokens),
+                               num_special_tokens + ratio * (i - num_special_tokens + 1)):
                     indexes.append((i, j))
                     values.append(1.)
-        self.coef = torch.sparse_coo_tensor(list(zip(*indexes)), values,
-                                            (self.vocab_size, num_out_emb_entries))
-        if torch.cuda.is_available() and not args.cpu:
-            self.coef = self.coef.cuda()
+        return torch.sparse_coo_tensor(list(zip(*indexes)), values,
+                                            (vocab_size, num_out_emb_entries))
+
 
     def compute_loss(self, model, net_output, sample, reduce=True):
         lprobs = model.get_normalized_probs(net_output, log_probs=False)

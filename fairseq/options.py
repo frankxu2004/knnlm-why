@@ -491,6 +491,9 @@ def add_eval_lm_args(parser):
                        help='save keys for the knnlm datastore')
     group.add_argument('--dstore-mmap', default=None, type=str,
                        help='If saving knnlm dstore, save keys and values to this file')
+    # args for KNN-Distill
+    parser.add_argument('--pseudo-vocab-ratio', type=int, default=1,
+                        help='k|V| output embedding matrix')
     # fmt: on
 
 

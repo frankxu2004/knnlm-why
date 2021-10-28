@@ -9,6 +9,7 @@ import numpy as np
 import time
 
 from fairseq import utils
+from fairseq.criterions.agg_softmax import AggSoftmaxCriterion
 from fairseq.data import Dictionary
 
 
@@ -22,6 +23,10 @@ class SequenceScorer(object):
         assert self.softmax_batch > 0
         self.compute_alignment = compute_alignment
         self.args = args
+        if args.pseudo_vocab_ratio > 1:
+            self.coef = AggSoftmaxCriterion.initialize_projection_matrix(tgt_dict, args.pseudo_vocab_ratio)
+            if torch.cuda.is_available() and not args.cpu:
+                self.coef = self.coef.cuda()
 
     @torch.no_grad()
     def generate(self, models, sample, **kwargs):
@@ -74,9 +79,15 @@ class SequenceScorer(object):
             batched = batch_for_softmax(decoder_out, orig_target)
             probs, idx = None, 0
             for i, (bd, tgt, is_single) in enumerate(batched):
-                print(bd[0].shape)
                 sample['target'] = tgt
-                curr_prob = model.get_normalized_probs(bd, log_probs=len(models) == 1, sample=sample).data
+                if self.args.pseudo_vocab_ratio == 1:
+                    curr_prob = model.get_normalized_probs(bd, log_probs=len(models) == 1, sample=sample).data
+                else:
+                    curr_prob = model.get_normalized_probs(bd, log_probs=False, sample=sample).data
+                    assert curr_prob.shape[0] == 1
+                    curr_prob = curr_prob.squeeze(0)
+                    curr_prob = torch.log(torch.clamp(torch.sparse.mm(self.coef, curr_prob.T).T, min=1e-9))
+                    curr_prob = curr_prob.unsqueeze(0)
 
                 if is_single:
                     probs = gather_target_probs(curr_prob, orig_target)
