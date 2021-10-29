@@ -24,7 +24,18 @@ class SequenceScorer(object):
         self.compute_alignment = compute_alignment
         self.args = args
         if args.pseudo_vocab_ratio > 1:
+            # one-hot coef
             self.coef = AggSoftmaxCriterion.initialize_projection_matrix(tgt_dict, args.pseudo_vocab_ratio)
+            if torch.cuda.is_available() and not args.cpu:
+                self.coef = self.coef.cuda()
+        if args.load_centroid_distribution:
+            # load prior coef
+            from scipy import sparse
+            freq_mat = sparse.load_npz('checkpoints/wikitext103-bpe/cluster_freq.npz').tocoo().T
+            values = freq_mat.data
+            indices = np.vstack((freq_mat.row, freq_mat.col))
+            self.coef = torch.sparse_coo_tensor(indices, values.astype(np.float32),
+                                    freq_mat.shape)
             if torch.cuda.is_available() and not args.cpu:
                 self.coef = self.coef.cuda()
 
@@ -80,7 +91,7 @@ class SequenceScorer(object):
             probs, idx = None, 0
             for i, (bd, tgt, is_single) in enumerate(batched):
                 sample['target'] = tgt
-                if self.args.pseudo_vocab_ratio == 1:
+                if self.args.pseudo_vocab_ratio == 1 and not self.args.load_centroid_distribution:
                     curr_prob = model.get_normalized_probs(bd, log_probs=len(models) == 1, sample=sample).data
                 else:
                     curr_prob = model.get_normalized_probs(bd, log_probs=False, sample=sample).data
@@ -107,7 +118,7 @@ class SequenceScorer(object):
                 dstore = kwargs['knn_dstore']
                 # TxBxC
                 queries = bd[1][self.args.knn_keytype]
-                exit()
+
                 if len(models) != 1:
                     raise ValueError('Only knn *log* probs are supported.')
 

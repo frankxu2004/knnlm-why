@@ -98,6 +98,11 @@ def main(parsed_args):
         )
     logger.info('{} {} {} examples'.format(args.data, args.gen_subset, len(dataset)))
 
+    # KNNLM-Distill
+    if args.load_centroids and args.load_centroid_distribution:
+        centroids = np.load('checkpoints/wikitext103-bpe/centroids.npy')
+        models[0].decoder.embed_out = torch.nn.Parameter(torch.from_numpy(centroids))
+
     # Optimize ensemble for generation and set the source and dest dicts on the model (required by scorer)
     for model in models:
         model.make_generation_fast_()
