@@ -11,7 +11,7 @@ dictionary = Dictionary.load('data-bin/wikitext103-bpe/dict.txt')
 weight_matrix = np.load('checkpoints/wikitext103-bpe/out_embed.npy')
 
 keys_from_memmap = np.memmap('checkpoints/wikitext103-bpe/dstore_keys.npy',
-                dtype=np.float16, mode='r', shape=(dstore_size, vec_dim))
+                             dtype=np.float16, mode='r', shape=(dstore_size, vec_dim))
 vals_from_memmap = np.memmap('checkpoints/wikitext103-bpe/dstore_vals.npy',
                              dtype=np.int64, mode='r', shape=(dstore_size, 1))
 
@@ -23,11 +23,13 @@ del vals_from_memmap
 vals = vals.squeeze()
 
 first_zero_idx = (vals == 0).argmax(axis=0)
+vals = vals[:first_zero_idx]
 
 keys = np.zeros((first_zero_idx, vec_dim), dtype=np.float16)
 
 keys[:] = keys_from_memmap[:first_zero_idx]
 del keys_from_memmap
+
 
 def calc_mean(word_id):
     vecs = np.load('dstore/ids/' + str(word_id) + '.npy')
@@ -36,10 +38,11 @@ def calc_mean(word_id):
     else:
         return np.zeros(vec_dim)
 
+
 mean_vecs = []
 for i in tqdm(range(len(dictionary))):
-    vecs = keys[vals==i]
-    if vecs:
+    vecs = keys[vals == i]
+    if len(vecs):
         mean_vecs.append(np.mean(vecs, axis=0, dtype=np.float64))
     else:
         mean_vecs.append(weight_matrix[i])
