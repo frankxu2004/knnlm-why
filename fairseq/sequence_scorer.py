@@ -31,11 +31,14 @@ class SequenceScorer(object):
         if args.load_centroid_distribution:
             # load prior coef
             from scipy import sparse
+            print('Loading cluster-token distribution from file.')
             freq_mat = sparse.load_npz('checkpoints/wikitext103-bpe/cluster_freq.npz').tocoo().T
             values = freq_mat.data
             indices = np.vstack((freq_mat.row, freq_mat.col))
             self.coef = torch.sparse_coo_tensor(indices, values.astype(np.float32),
                                     freq_mat.shape)
+            self.coef = AggSoftmaxCriterion.initialize_projection_matrix(tgt_dict, 1)
+            print(self.coef)
             if torch.cuda.is_available() and not args.cpu:
                 self.coef = self.coef.cuda()
 
@@ -97,7 +100,7 @@ class SequenceScorer(object):
                     curr_prob = model.get_normalized_probs(bd, log_probs=False, sample=sample).data
                     assert curr_prob.shape[0] == 1
                     curr_prob = curr_prob.squeeze(0)
-                    curr_prob = torch.log(torch.clamp(torch.sparse.mm(self.coef, curr_prob.T).T, min=1e-9))
+                    curr_prob = torch.log(torch.sparse.mm(self.coef, curr_prob.T).T)
                     curr_prob = curr_prob.unsqueeze(0)
 
                 if is_single:
