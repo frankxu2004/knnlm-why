@@ -24,6 +24,7 @@ class SequenceScorer(object):
         self.compute_alignment = compute_alignment
         self.args = args
         if args.pseudo_vocab_ratio > 1:
+            print('Using one hot cluster distribution with K=', args.pseudo_vocab_ratio)
             # one-hot coef
             self.coef = AggSoftmaxCriterion.initialize_projection_matrix(tgt_dict, args.pseudo_vocab_ratio)
             if torch.cuda.is_available() and not args.cpu:
