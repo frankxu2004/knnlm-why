@@ -101,7 +101,7 @@ def main(parsed_args):
     # KNNLM-Distill
     if args.load_centroids:
         print('Loading centroids from file.')
-        centroids = np.load('checkpoints/wikitext103-bpe/centroid_word.npy').astype(np.float32)
+        centroids = np.load('checkpoints/wikitext103-bpe/centroids.npy').astype(np.float32)
         models[0].decoder.embed_out = torch.nn.Parameter(torch.from_numpy(centroids))
 
     # Optimize ensemble for generation and set the source and dest dicts on the model (required by scorer)

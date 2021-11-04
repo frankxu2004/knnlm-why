@@ -329,7 +329,7 @@ class TransformerDecoderLayer(nn.Module):
             return x, attn, self_attn_state
 
         if ret_ffn_inp:
-            return x, ((attn, ffn_inp)), None
+            return x, (attn, ffn_inp), None
         return x, attn, None
 
     def make_generation_fast_(self, need_attn: bool = False, **kwargs):

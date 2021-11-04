@@ -579,6 +579,9 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         self.share_input_output_embed = args.share_decoder_input_output_embed
         self.knn_keytype = args.knn_keytype
 
+        # use last ffn input to multiply weight matrix
+        self.use_last_ffn_input = args.use_last_ffn_input
+
         input_embed_dim = embed_tokens.embedding_dim
         embed_dim = args.decoder_embed_dim
         self.embed_dim = embed_dim
@@ -698,6 +701,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             alignment_layer=alignment_layer,
             alignment_heads=alignment_heads,
         )
+        if self.use_last_ffn_input:
+            x = extra['last_ffn_input'].permute(1, 0, 2)
         if not features_only:
             x = self.output_layer(x)
         return x, extra

@@ -494,6 +494,8 @@ def add_eval_lm_args(parser):
     # args for KNN-Distill
     parser.add_argument('--pseudo-vocab-ratio', type=int, default=1,
                         help='k|V| output embedding matrix')
+    parser.add_argument('--use-last-ffn-input', action='store_true',
+                        help='if set, use last ffn input to multiply weight matrix')
     parser.add_argument('--load-centroids', type=str, default='',
                         help='centroids npy file path')
     parser.add_argument('--load-centroid-distribution', type=str, default='',
