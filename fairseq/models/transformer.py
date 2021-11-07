@@ -777,6 +777,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         attn: Optional[Tensor] = None
         inner_states: List[Optional[Tensor]] = [x]
         get_ffn_inp: bool = False
+        get_linear_inp: bool = False
         for idx, layer in enumerate(self.layers):
             encoder_state: Optional[Tensor] = None
             if encoder_out is not None:
@@ -796,6 +797,11 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 get_ffn_inp = True
             else:
                 get_ffn_inp = False
+
+            if self.knn_keytype == 'last_linear_input' and idx == (len(self.layers)-1):
+                get_linear_inp = True
+            else:
+                get_linear_inp = False
 
             # add LayerDrop (see https://arxiv.org/abs/1909.11556 for description)
             dropout_probability = torch.empty(1).uniform_()
@@ -832,13 +838,16 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         if self.layer_norm is not None:
             x = self.layer_norm(x)
 
+        if get_linear_inp:
+            knn_emb = x.clone()
+
         # T x B x C -> B x T x C
         x = x.transpose(0, 1)
 
         if self.project_out_dim is not None:
             x = self.project_out_dim(x)
 
-        if self.knn_keytype == 'last_ffn_input':
+        if self.knn_keytype in {'last_ffn_input', 'last_linear_input'}:
             return x, {'attn': [attn], 'inner_states': inner_states, self.knn_keytype: knn_emb}
 
         return x, {"attn": [attn], "inner_states": inner_states}
