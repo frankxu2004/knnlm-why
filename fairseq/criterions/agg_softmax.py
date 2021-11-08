@@ -32,7 +32,7 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
         vocab_size = len(dictionary)
 
         num_out_emb_entries = num_special_tokens + ratio * (
-                    vocab_size - num_special_tokens)
+                vocab_size - num_special_tokens)
 
         indexes = []
         values = []
@@ -46,26 +46,13 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
                     indexes.append((i, j))
                     values.append(1.)
         return torch.sparse_coo_tensor(list(zip(*indexes)), values,
-                                            (vocab_size, num_out_emb_entries))
-
+                                       (vocab_size, num_out_emb_entries))
 
     def compute_loss(self, model, net_output, sample, reduce=True):
         lprobs = model.get_normalized_probs(net_output, log_probs=False)
         lprobs = lprobs.view(-1, lprobs.size(-1))
-        lprobs = torch.log(torch.clamp(torch.sparse.mm(self.coef, lprobs.T).T, min=1e-9)) #bsz x vocab
+        lprobs = torch.log(torch.clamp(torch.sparse.mm(self.coef, lprobs.T).T, min=1e-9))  # bsz x vocab
         target = model.get_targets(sample, net_output).view(-1)
-        # agg_probs = torch.full((target.size(0), self.ratio), -10000).cuda()
-        # for idx, t in enumerate(target):
-        #     if t < self.num_special_tokens:
-        #         agg_probs[idx, 0] = lprobs[idx, t]
-        #     else:
-        #         agg_probs[idx, range(self.ratio)] = lprobs[idx, range(self.num_special_tokens + self.ratio * (t - self.num_special_tokens),
-        #                        self.num_special_tokens + self.ratio * (t - self.num_special_tokens + 1))]
-        # agg_probs = torch.logsumexp(agg_probs, dim=-1)
-        # if reduce:
-        #     loss = torch.sum(-agg_probs[target != self.padding_idx])
-        # else:
-        #     loss = -agg_probs[target != self.padding_idx]
 
         loss = F.nll_loss(
             lprobs,

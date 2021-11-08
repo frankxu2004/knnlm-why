@@ -4,19 +4,24 @@ from faiss import IndexFlatL2
 
 from fairseq.data import Dictionary
 
-dstore_size = 153225485
+# dstore_size = 153225485
+dstore_size = 112733184
+
 vec_dim = 1024
 ratio = 2
+# ckpt_path = 'checkpoints/wikitext103-bpe/'
+ckpt_path = 'checkpoints/wikitext103-bpe/last_linear_inp/'
+
 
 dictionary = Dictionary.load('data-bin/wikitext103-bpe/dict.txt')
 print(len(dictionary))
 
-keys = np.memmap('checkpoints/wikitext103-bpe/dstore_keys.npy',
-                             dtype=np.float16, mode='r', shape=(dstore_size, vec_dim))
-vals_from_memmap = np.memmap('checkpoints/wikitext103-bpe/dstore_vals.npy',
-                             dtype=np.int, mode='r', shape=(dstore_size, 1))
+keys = np.memmap(ckpt_path + 'dstore_keys.npy',
+                 dtype=np.float16, mode='r', shape=(dstore_size, vec_dim))
+vals_from_memmap = np.memmap(ckpt_path + 'dstore_vals.npy',
+                             dtype=np.int64, mode='r', shape=(dstore_size, 1))
 
-vals = np.zeros((dstore_size, 1), dtype=np.int)
+vals = np.zeros((dstore_size, 1), dtype=np.int64)
 
 vals[:] = vals_from_memmap[:]
 del vals_from_memmap
@@ -25,9 +30,13 @@ vals = vals.squeeze()
 
 # after first zero it's all useless vecs
 first_zero_idx = (vals == 0).argmax(axis=0)
+if first_zero_idx == 0:
+    # no zeros at all, all should be used
+    first_zero_idx = len(vals)
+
 print('to add:', first_zero_idx)
 
-centroids = np.load('checkpoints/wikitext103-bpe/centroids.npy')
+centroids = np.load(ckpt_path + 'centroids.npy')
 index = IndexFlatL2(vec_dim)
 index = faiss.index_cpu_to_all_gpus(index)
 index.add(centroids)
@@ -49,5 +58,5 @@ while start < first_zero_idx:
         print('Assigned %d tokens so far' % start)
 
 print(np.concatenate(dists).shape)
-np.save('checkpoints/wikitext103-bpe/dist.npy', np.concatenate(dists))
-np.save('checkpoints/wikitext103-bpe/centroid_ids.npy', np.concatenate(centroid_ids))
+np.save(ckpt_path + 'dist.npy', np.concatenate(dists))
+np.save(ckpt_path + 'centroid_ids.npy', np.concatenate(centroid_ids))

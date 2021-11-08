@@ -166,11 +166,11 @@ def main(parsed_args):
             if args.dstore_fp16:
                 print('Saving fp16')
                 dstore_keys = np.memmap(args.dstore_mmap+'_keys.npy', dtype=np.float16, mode='w+', shape=(args.dstore_size, args.decoder_embed_dim))
-                dstore_vals = np.memmap(args.dstore_mmap+'_vals.npy', dtype=np.int, mode='w+', shape=(args.dstore_size, 1))
+                dstore_vals = np.memmap(args.dstore_mmap+'_vals.npy', dtype=np.int64, mode='w+', shape=(args.dstore_size, 1))
             else:
                 print('Saving fp32')
                 dstore_keys = np.memmap(args.dstore_mmap+'_keys.npy', dtype=np.float32, mode='w+', shape=(args.dstore_size, args.decoder_embed_dim))
-                dstore_vals = np.memmap(args.dstore_mmap+'_vals.npy', dtype=np.int, mode='w+', shape=(args.dstore_size, 1))
+                dstore_vals = np.memmap(args.dstore_mmap+'_vals.npy', dtype=np.int64, mode='w+', shape=(args.dstore_size, 1))
 
         dstore_idx = 0
         for ex_i, sample in enumerate(t):
@@ -201,12 +201,12 @@ def main(parsed_args):
                             dstore_keys[dstore_idx:shape[0]+dstore_idx] = hypo['dstore_keys'].view(
                                 -1, args.decoder_embed_dim).cpu().numpy().astype(np.float16)
                             dstore_vals[dstore_idx:shape[0]+dstore_idx] = hypo['tokens'].view(
-                                -1, 1).cpu().numpy().astype(np.int)
+                                -1, 1).cpu().numpy().astype(np.int64)
                         else:
                             dstore_keys[dstore_idx:shape[0]+dstore_idx] = hypo['dstore_keys'].view(
                                 -1, args.decoder_embed_dim).cpu().numpy().astype(np.float32)
                             dstore_vals[dstore_idx:shape[0]+dstore_idx] = hypo['tokens'].view(
-                                -1, 1).cpu().numpy().astype(np.int)
+                                -1, 1).cpu().numpy().astype(np.int64)
                         dstore_idx += shape[0]
                     else:
                         print('Skipping this one with shape', shape)

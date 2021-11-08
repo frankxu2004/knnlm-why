@@ -9,7 +9,7 @@ vec_dim = 1024
 keys_from_memmap = np.memmap('checkpoints/wikitext103-bpe-tied/dstore_keys.npy',
                              dtype=np.float16, mode='r', shape=(dstore_size, vec_dim))
 vals_from_memmap = np.memmap('checkpoints/wikitext103-bpe-tied/dstore_vals.npy',
-                             dtype=np.int, mode='r', shape=(dstore_size, 1))
+                             dtype=np.int64, mode='r', shape=(dstore_size, 1))
 #
 # print(keys_from_memmap[0])
 # print(vals_from_memmap[0])

@@ -31,12 +31,12 @@ class KNN_Dstore(object):
             print('Keys are fp16 and vals are int64')
             if not args.no_load_keys:
                 self.keys = np.memmap(args.dstore_filename+'_keys.npy', dtype=np.float16, mode='r', shape=(self.dstore_size, self.dimension))
-            self.vals = np.memmap(args.dstore_filename+'_vals.npy', dtype=np.int, mode='r', shape=(self.dstore_size, 1))
+            self.vals = np.memmap(args.dstore_filename+'_vals.npy', dtype=np.int64, mode='r', shape=(self.dstore_size, 1))
         else:
             print('Keys are fp32 and vals are int64')
             if not args.no_load_keys:
                 self.keys = np.memmap(args.dstore_filename+'_keys.npy', dtype=np.float32, mode='r', shape=(self.dstore_size, self.dimension))
-            self.vals = np.memmap(args.dstore_filename+'_vals.npy', dtype=np.int, mode='r', shape=(self.dstore_size, 1))
+            self.vals = np.memmap(args.dstore_filename+'_vals.npy', dtype=np.int64, mode='r', shape=(self.dstore_size, 1))
 
         # If you wish to load all the keys into memory
         # CAUTION: Only do this if your RAM can handle it!
@@ -54,10 +54,10 @@ class KNN_Dstore(object):
                 self.keys = self.keys.astype(np.float16 if args.dstore_fp16 else np.float32)
 
             del self.vals
-            self.vals_from_memmap = np.memmap(args.dstore_filename+'_vals.npy', dtype=np.int, mode='r', shape=(self.dstore_size, 1))
-            self.vals = np.zeros((self.dstore_size, 1), dtype=np.int)
+            self.vals_from_memmap = np.memmap(args.dstore_filename+'_vals.npy', dtype=np.int64, mode='r', shape=(self.dstore_size, 1))
+            self.vals = np.zeros((self.dstore_size, 1), dtype=np.int64)
             self.vals = self.vals_from_memmap[:]
-            self.vals = self.vals.astype(np.int)
+            self.vals = self.vals.astype(np.int64)
             print('Loading to memory took {} s'.format(time.time() - start))
 
         return index
@@ -97,7 +97,7 @@ class KNN_Dstore(object):
         # queries  are TxBxC
         # reshape: (TxB)xC
         qshape = queries.shape
-        queries = queries.view(-1, qshape[-1])
+        queries = queries.contiguous().view(-1, qshape[-1])
         tgt = tgt.contiguous().view(-1)
         dists, knns = self.get_knns(queries[tgt != pad_idx])
         # (T_reducedxB)xK
@@ -112,7 +112,7 @@ class KNN_Dstore(object):
 
         # (T_reducedxB)
         yhat_knn_prob = torch.logsumexp(probs + index_mask, dim=-1).clone()
-        full_yhat_knn_prob = torch.full([qshape[0]*qshape[1]], -10000).cuda()
+        full_yhat_knn_prob = torch.full([qshape[0]*qshape[1]], -10000.).cuda()
         full_yhat_knn_prob[tgt != pad_idx] = yhat_knn_prob
 
         # TxBx1

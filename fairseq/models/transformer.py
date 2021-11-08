@@ -581,6 +581,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
         # use last ffn input to multiply weight matrix, default to false
         self.use_last_ffn_input = getattr(args, "use_last_ffn_input", False)
+        print("use_last_ffn_input:", self.use_last_ffn_input)
 
         input_embed_dim = embed_tokens.embedding_dim
         embed_dim = args.decoder_embed_dim

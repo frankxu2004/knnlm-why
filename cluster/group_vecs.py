@@ -12,11 +12,11 @@ print(len(dictionary))
 keys_from_memmap = np.memmap('checkpoints/wikitext103-bpe/dstore_keys.npy',
                              dtype=np.float16, mode='r', shape=(dstore_size, vec_dim))
 vals_from_memmap = np.memmap('checkpoints/wikitext103-bpe/dstore_vals.npy',
-                             dtype=np.int, mode='r', shape=(dstore_size, 1))
+                             dtype=np.int64, mode='r', shape=(dstore_size, 1))
 
 
 keys = np.zeros((dstore_size, vec_dim), dtype=np.float16)
-vals = np.zeros((dstore_size, 1), dtype=np.int)
+vals = np.zeros((dstore_size, 1), dtype=np.int64)
 
 keys[:] = keys_from_memmap[:]
 vals[:] = vals_from_memmap[:]

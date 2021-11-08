@@ -12,9 +12,9 @@ centroid_ids = np.load('checkpoints/wikitext103-bpe/centroid_ids.npy')
 dictionary = Dictionary.load('data-bin/wikitext103-bpe/dict.txt')
 
 # vals_from_memmap = np.memmap('checkpoints/wikitext103-bpe/dstore_vals.npy',
-#                              dtype=np.int, mode='r', shape=(dstore_size, 1))
+#                              dtype=np.int64, mode='r', shape=(dstore_size, 1))
 #
-# vals = np.zeros((dstore_size, 1), dtype=np.int)
+# vals = np.zeros((dstore_size, 1), dtype=np.int64)
 #
 # vals[:] = vals_from_memmap[:]
 # del vals_from_memmap
