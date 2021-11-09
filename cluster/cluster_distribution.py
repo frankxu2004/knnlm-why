@@ -5,33 +5,44 @@ import pandas as pd
 from scipy.sparse import csr_matrix
 from scipy import sparse
 
-dstore_size = 153225485
+# dstore_size = 153225485
+dstore_size = 112733184
+# ckpt_path = 'checkpoints/wikitext103-bpe/'
+ckpt_path = 'checkpoints/wikitext103-bpe/last_linear_inp/'
 
-dists = np.load('checkpoints/wikitext103-bpe/dist.npy')
-centroid_ids = np.load('checkpoints/wikitext103-bpe/centroid_ids.npy')
 dictionary = Dictionary.load('data-bin/wikitext103-bpe/dict.txt')
 
-# vals_from_memmap = np.memmap('checkpoints/wikitext103-bpe/dstore_vals.npy',
-#                              dtype=np.int64, mode='r', shape=(dstore_size, 1))
-#
-# vals = np.zeros((dstore_size, 1), dtype=np.int64)
-#
-# vals[:] = vals_from_memmap[:]
-# del vals_from_memmap
-#
-# vals = vals.squeeze()
-#
-# # after first zero it's all useless vecs
-# first_zero_idx = (vals == 0).argmax(axis=0)
-# vals = vals[:first_zero_idx]
+dists = np.load(ckpt_path + 'dist.npy')
+centroid_ids = np.load(ckpt_path + 'centroid_ids.npy')
 
-# freq_mat = np.zeros((np.max(centroid_ids) + 1, len(dictionary)))
-#
-# for centroid_id, word_id in tqdm.tqdm(zip(centroid_ids, vals)):
-#     freq_mat[centroid_id, word_id] += 1
-#
-# freq_mat = csr_matrix(freq_mat)
-freq_mat = sparse.load_npz('checkpoints/wikitext103-bpe/cluster_count.npz')
+vals_from_memmap = np.memmap(ckpt_path + 'dstore_vals.npy',
+                             dtype=np.int64, mode='r', shape=(dstore_size, 1))
+
+vals = np.zeros((dstore_size, 1), dtype=np.int64)
+
+vals[:] = vals_from_memmap[:]
+del vals_from_memmap
+
+vals = vals.squeeze()
+
+# after first zero it's all useless vecs
+first_zero_idx = (vals == 0).argmax(axis=0)
+if first_zero_idx == 0:
+    # no zeros at all, all should be used
+    first_zero_idx = len(vals)
+
+vals = vals[:first_zero_idx]
+
+freq_mat = np.zeros((np.max(centroid_ids) + 1, len(dictionary)))
+
+for centroid_id, word_id in tqdm.tqdm(zip(centroid_ids, vals)):
+    freq_mat[centroid_id, word_id] += 1
+
+freq_mat = csr_matrix(freq_mat)
+
+sparse.save_npz(ckpt_path + 'cluster_count.npz', freq_mat)
+
+freq_mat = sparse.load_npz(ckpt_path + 'cluster_count.npz')
 
 print('Sparsity:', 1 - freq_mat.getnnz() / np.prod(freq_mat.shape))
 
@@ -41,7 +52,7 @@ cluster_size = np.squeeze(np.asarray(cluster_size), axis=1)
 sums = np.repeat(cluster_size, freq_mat.getnnz(axis=1))
 freq_mat.data /= sums
 
-sparse.save_npz('checkpoints/wikitext103-bpe/cluster_freq.npz', freq_mat)
+sparse.save_npz(ckpt_path + 'cluster_freq.npz', freq_mat)
 
 k = 10
 
@@ -61,5 +72,5 @@ for idx in tqdm.tqdm(range(freq_mat.shape[0])):
     data.append(item)
 
 df = pd.DataFrame(data)
-df.to_csv('cluster.csv')
+df.to_csv(ckpt_path + 'cluster.csv')
 

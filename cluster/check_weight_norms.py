@@ -2,10 +2,6 @@ import numpy as np
 from fairseq.data import Dictionary
 import matplotlib.pyplot as plt
 
-
-dstore_size = 153225485
-vec_dim = 1024
-
 dictionary = Dictionary.load('data-bin/wikitext103-bpe/dict.txt')
 
 weight_matrix = np.load('checkpoints/wikitext103-bpe/out_embed.npy')

@@ -23,6 +23,7 @@ class SequenceScorer(object):
         assert self.softmax_batch > 0
         self.compute_alignment = compute_alignment
         self.args = args
+        self.coef = None
         if args.pseudo_vocab_ratio > 1:
             print('Using one hot cluster distribution with K=', args.pseudo_vocab_ratio)
             # one-hot coef
@@ -32,16 +33,17 @@ class SequenceScorer(object):
         if args.load_centroid_distribution:
             # load prior coef
             from scipy import sparse
-            print('Loading cluster-token distribution from file.')
-            freq_mat = sparse.load_npz('checkpoints/wikitext103-bpe/cluster_freq.npz').tocoo().T
+            print('Loading cluster-token distribution from file:', args.load_centroid_distribution)
+            freq_mat = sparse.load_npz(args.load_centroid_distribution).tocoo().T
             values = freq_mat.data
             indices = np.vstack((freq_mat.row, freq_mat.col))
             self.coef = torch.sparse_coo_tensor(indices, values.astype(np.float32),
                                     freq_mat.shape)
             # self.coef = AggSoftmaxCriterion.initialize_projection_matrix(tgt_dict, 1)
-            print(self.coef)
             if torch.cuda.is_available() and not args.cpu:
                 self.coef = self.coef.cuda()
+        print('coef is:')
+        print(self.coef)
 
     @torch.no_grad()
     def generate(self, models, sample, **kwargs):
@@ -95,7 +97,7 @@ class SequenceScorer(object):
             probs, idx = None, 0
             for i, (bd, tgt, is_single) in enumerate(batched):
                 sample['target'] = tgt
-                if self.args.pseudo_vocab_ratio == 1 and not self.args.load_centroid_distribution:
+                if self.coef is None:
                     curr_prob = model.get_normalized_probs(bd, log_probs=len(models) == 1, sample=sample).data
                 else:
                     curr_prob = model.get_normalized_probs(bd, log_probs=False, sample=sample).data
