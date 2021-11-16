@@ -401,6 +401,16 @@ def add_optimization_args(parser):
                        help='stop training when the learning rate reaches this minimum')
     group.add_argument('--use-bmuf', default=False, action='store_true',
                        help='specify global optimizer for syncing models on different GPUs/shards')
+    #KNN-distill finetune
+    group.add_argument('--finetune-centroids', default=False, action='store_true',
+                       help='only finetune centroid matrix')
+    parser.add_argument('--load-centroids', type=str, default='',
+                        help='centroids npy file path')
+    parser.add_argument('--load-centroid-distribution', type=str, default='',
+                        help='freq_mat npz file path')
+    parser.add_argument('--use-last-ffn-input', action='store_true',
+                        help='if set, use last ffn input to multiply weight matrix')
+
     # fmt: on
     return group
 

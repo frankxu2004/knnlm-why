@@ -189,6 +189,16 @@ class Trainer(object):
                     "please ensure that the architectures match.".format(filename)
                 )
 
+            # KNNLM-Distill
+            if self.args.load_centroids:
+                import numpy as np
+                print('Loading centroids from file:', self.args.load_centroids)
+                centroids = np.load(self.args.load_centroids).astype(np.float32)
+                centroids = torch.from_numpy(centroids).cuda()
+                if self.args.fp16:
+                    centroids = centroids.half()
+                self.get_model().decoder.embed_out = torch.nn.Parameter(centroids)
+
             extra_state = state["extra_state"]
             self._optim_history = state["optimizer_history"]
             last_optim_state = state.get("last_optimizer_state", None)

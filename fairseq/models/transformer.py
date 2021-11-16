@@ -668,6 +668,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         else:
             self.layernorm_embedding = None
 
+        self.use_l2 = getattr(args, 'use_l2', False)
+
     def forward(
         self,
         prev_output_tokens,
@@ -859,6 +861,12 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             # project back to size of vocabulary
             if self.share_input_output_embed:
                 return F.linear(features, self.embed_tokens.weight)
+            elif self.use_l2:
+                dot_product = F.linear(features, self.embed_out)
+                features_norms = torch.sum(features**2, dim=-1).unsqueeze(-1)
+                embed_norms = torch.sum(self.embed_out**2, dim=-1).view(1, 1, -1)
+                l2 = 2 * dot_product - features_norms - embed_norms
+                return l2
             else:
                 return F.linear(features, self.embed_out)
         else:

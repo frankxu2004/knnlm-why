@@ -7,6 +7,7 @@ import math
 
 import torch.nn.functional as F
 import torch
+import numpy as np
 from torch import nn
 
 from fairseq import metrics, utils
@@ -22,9 +23,27 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
         self.num_special_tokens = task.target_dictionary.nspecial
         self.vocab_size = len(task.target_dictionary)
         self.ratio = args.pseudo_vocab_ratio
-        self.coef = self.initialize_projection_matrix(task.target_dictionary, args.pseudo_vocab_ratio)
-        if torch.cuda.is_available() and not args.cpu:
-            self.coef = self.coef.cuda()
+        self.coef = None
+        if self.ratio > 1:
+            print('Using one hot cluster distribution with K=', args.pseudo_vocab_ratio)
+            # one-hot coef
+            self.coef = self.initialize_projection_matrix(task.target_dictionary, args.pseudo_vocab_ratio)
+            if torch.cuda.is_available() and not args.cpu:
+                self.coef = self.coef.cuda()
+        if args.load_centroid_distribution:
+            # load prior coef
+            from scipy import sparse
+            print('Loading cluster-token distribution from file:', args.load_centroid_distribution)
+            freq_mat = sparse.load_npz(args.load_centroid_distribution).tocoo().T
+            values = freq_mat.data
+            indices = np.vstack((freq_mat.row, freq_mat.col))
+            self.coef = torch.sparse_coo_tensor(indices, values.astype(np.float32),
+                                    freq_mat.shape).coalesce()
+            if torch.cuda.is_available() and not args.cpu:
+                self.coef = self.coef.cuda()
+        print('coef is:')
+        print(self.coef)
+        print(self.coef.is_coalesced())
 
     @staticmethod
     def initialize_projection_matrix(dictionary, ratio):
@@ -46,14 +65,16 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
                     indexes.append((i, j))
                     values.append(1.)
         return torch.sparse_coo_tensor(list(zip(*indexes)), values,
-                                       (vocab_size, num_out_emb_entries))
+                                       (vocab_size, num_out_emb_entries)).coalesce()
 
     def compute_loss(self, model, net_output, sample, reduce=True):
-        lprobs = model.get_normalized_probs(net_output, log_probs=False)
-        lprobs = lprobs.view(-1, lprobs.size(-1))
-        lprobs = torch.log(torch.clamp(torch.sparse.mm(self.coef, lprobs.T).T, min=1e-9))  # bsz x vocab
+        if self.coef is None:
+            lprobs = model.get_normalized_probs(net_output, log_probs=True)
+        else:
+            lprobs = model.get_normalized_probs(net_output, log_probs=False)
+            lprobs = lprobs.view(-1, lprobs.size(-1))
+            lprobs = torch.log(torch.clamp(torch.sparse.mm(self.coef, lprobs.T).T, min=1e-9))  # bsz x vocab
         target = model.get_targets(sample, net_output).view(-1)
-
         loss = F.nll_loss(
             lprobs,
             target,

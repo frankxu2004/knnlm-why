@@ -63,6 +63,7 @@ def main(args, init_distributed=False):
     # Build model and criterion
     model = task.build_model(args)
     criterion = task.build_criterion(args)
+
     logger.info(model)
     logger.info('model {}, criterion {}'.format(args.arch, criterion.__class__.__name__))
     logger.info('num. model params: {} (num. trained: {})'.format(
@@ -81,6 +82,12 @@ def main(args, init_distributed=False):
     # Load the latest checkpoint if one is available and restore the
     # corresponding train iterator
     extra_state, epoch_itr = checkpoint_utils.load_checkpoint(args, trainer)
+
+    # if only tune centroid matrix
+    if args.finetune_centroids:
+        for name, param in model.named_parameters():
+            if name != 'decoder.embed_out':
+                param.requires_grad = False
 
     # Train until the learning rate gets too small
     max_epoch = args.max_epoch or math.inf

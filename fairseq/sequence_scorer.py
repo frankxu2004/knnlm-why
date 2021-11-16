@@ -38,8 +38,7 @@ class SequenceScorer(object):
             values = freq_mat.data
             indices = np.vstack((freq_mat.row, freq_mat.col))
             self.coef = torch.sparse_coo_tensor(indices, values.astype(np.float32),
-                                    freq_mat.shape)
-            # self.coef = AggSoftmaxCriterion.initialize_projection_matrix(tgt_dict, 1)
+                                    freq_mat.shape).coalesce()
             if torch.cuda.is_available() and not args.cpu:
                 self.coef = self.coef.cuda()
         print('coef is:')
