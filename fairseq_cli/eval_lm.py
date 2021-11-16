@@ -284,8 +284,8 @@ def main(parsed_args):
         print("Keys", dstore_keys.shape, dstore_keys.dtype)
         print("Vals", dstore_vals.shape, dstore_vals.dtype)
 
-    np.save('tokens.npy', np.concatenate(all_token_ids))
-    np.save('scores.npy', np.concatenate(all_scores))
+    # np.save('kmeans_tokens.npy', np.concatenate(all_token_ids))
+    # np.save('kmeans_scores.npy', np.concatenate(all_scores))
 
     avg_nll_loss = -score_sum / count / math.log(2)  # convert to base 2
     logger.info('Evaluated {} tokens in {:.1f}s ({:.2f} tokens/s)'.format(
