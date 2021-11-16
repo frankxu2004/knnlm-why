@@ -1,5 +1,7 @@
+import ctypes
 import faiss
 import numpy as np
+from tqdm import tqdm
 
 from fairseq.data import Dictionary
 
@@ -17,6 +19,7 @@ print(len(dictionary))
 
 keys = np.memmap(ckpt_path + 'dstore_keys.npy',
                  dtype=np.float16, mode='r', shape=(dstore_size, vec_dim))
+
 vals_from_memmap = np.memmap(ckpt_path + 'dstore_vals.npy',
                              dtype=np.int64, mode='r', shape=(dstore_size, 1))
 
@@ -30,8 +33,18 @@ first_zero_idx = (vals == 0).argmax(axis=0)
 if first_zero_idx == 0:
     # no zeros at all, all should be used
     first_zero_idx = len(vals)
-to_cluster = np.zeros((first_zero_idx, vec_dim), dtype=np.float16)
-to_cluster[:] = keys[:first_zero_idx]
+# to_cluster = np.zeros((first_zero_idx, vec_dim), dtype=np.float16)
+# print('allocated memory space')
+#
+# to_cluster[:] = keys[:first_zero_idx]
+# del keys
+vals = vals[:first_zero_idx]
+
+print('loaded all to memory!')
+for i in tqdm(reversed(range(len(dictionary)))):
+    idxes = np.nonzero(vals == i)
+    vecs = keys[idxes]
+    print(vecs.shape)
 
 # subsample for training kmeans
 rs = np.random.RandomState(1)

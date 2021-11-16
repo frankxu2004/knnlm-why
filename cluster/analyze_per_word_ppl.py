@@ -11,6 +11,8 @@ tokens = np.load('tokens.npy')
 scores = np.load('scores.npy')
 kmeans_tokens = np.load('kmeans_tokens.npy')
 kmeans_scores = np.load('kmeans_scores.npy')
+knnlm_tokens = np.load('knnlm_tokens.npy')
+knnlm_scores = np.load('knnlm_scores.npy')
 
 assert len(tokens) == len(scores)
 
@@ -39,12 +41,14 @@ def calc_mean_loss(tokens, scores):
 
 means = calc_mean_loss(tokens, scores)
 kmeans_means = calc_mean_loss(kmeans_tokens, kmeans_scores)
+knnlm_means = calc_mean_loss(knnlm_tokens, knnlm_scores)
 
 import matplotlib.pyplot as plt
 
 X_axis = np.arange(len(x))
-plt.bar(X_axis - 0.2, means, 0.4, label='original')
-plt.bar(X_axis + 0.2, kmeans_means, 0.4, label='kmeans')
+plt.bar(X_axis - 0.2, means, 0.2, label='original')
+plt.bar(X_axis + 0.0, knnlm_means, 0.2, label='knnlm')
+plt.bar(X_axis + 0.2, kmeans_means, 0.2, label='kmeans')
 
 plt.xticks(X_axis, x)
 plt.xlabel("Token Freq in Training Corpus")
