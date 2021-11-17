@@ -31,6 +31,7 @@ for i in tqdm(range(len(dictionary))):
         idx = rs.choice(np.arange(num_vecs), size=min(1000000, num_vecs), replace=False)
         to_cluster = vecs[idx]
         to_cluster = to_cluster.astype(np.float32)
+
         ncentroids = 2
         niter = 20
         use_gpu = True
@@ -38,6 +39,7 @@ for i in tqdm(range(len(dictionary))):
             use_gpu = False
         kmeans = faiss.Kmeans(vec_dim, ncentroids, niter=niter, verbose=False, gpu=use_gpu, seed=1)
         obj = kmeans.train(to_cluster)
+        print(kmeans.centroids)
         objectives.append(obj)
         all_vecs.append(kmeans.centroids)
         all_vocab_ids.extend([i]*2)
