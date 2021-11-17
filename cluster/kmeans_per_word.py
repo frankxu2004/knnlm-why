@@ -1,6 +1,7 @@
-import ctypes
 import faiss
 import numpy as np
+from scipy import sparse
+from scipy.sparse import csr_matrix
 from tqdm import tqdm
 
 from fairseq.data import Dictionary
@@ -13,51 +14,49 @@ ratio = 2
 ckpt_path = 'checkpoints/wikitext103-bpe/'
 # ckpt_path = 'checkpoints/wikitext103-bpe/last_linear_inp/'
 
+rs = np.random.RandomState(1)
 
 dictionary = Dictionary.load('data-bin/wikitext103-bpe/dict.txt')
 print(len(dictionary))
 
-keys = np.memmap(ckpt_path + 'dstore_keys.npy',
-                 dtype=np.float16, mode='r', shape=(dstore_size, vec_dim))
+all_vecs = []
+all_vocab_ids = []
+objectives = []
 
-vals_from_memmap = np.memmap(ckpt_path + 'dstore_vals.npy',
-                             dtype=np.int64, mode='r', shape=(dstore_size, 1))
+for i in tqdm(range(len(dictionary))):
+    vecs = np.load('dstore/ids/' + str(i) + '.npy')
+    num_vecs = len(vecs)
+    if num_vecs > 0:
+        # subsample for training kmeans
+        idx = rs.choice(np.arange(num_vecs), size=min(1000000, num_vecs), replace=False)
+        to_cluster = vecs[idx]
+        to_cluster = to_cluster.astype(np.float32)
+        ncentroids = 2
+        niter = 20
+        use_gpu = True
+        if num_vecs < 10000:
+            use_gpu = False
+        kmeans = faiss.Kmeans(vec_dim, ncentroids, niter=niter, verbose=False, gpu=use_gpu, seed=1)
+        obj = kmeans.train(to_cluster)
+        objectives.append(obj)
+        all_vecs.append(kmeans.centroids)
+        all_vocab_ids.extend([i]*2)
 
-vals = np.zeros((dstore_size, 1), dtype=np.int64)
+all_vecs = np.concatenate(all_vecs)
+objectives = np.array(objectives)
+print(all_vecs.shape)
 
-vals[:] = vals_from_memmap[:]
-del vals_from_memmap
+assert len(all_vecs) == len(all_vocab_ids)
 
-vals = vals.squeeze()
-first_zero_idx = (vals == 0).argmax(axis=0)
-if first_zero_idx == 0:
-    # no zeros at all, all should be used
-    first_zero_idx = len(vals)
-# to_cluster = np.zeros((first_zero_idx, vec_dim), dtype=np.float16)
-# print('allocated memory space')
-#
-# to_cluster[:] = keys[:first_zero_idx]
-# del keys
-vals = vals[:first_zero_idx]
+freq_mat = np.zeros((len(all_vecs), len(dictionary)))
 
-print('loaded all to memory!')
-for i in tqdm(reversed(range(len(dictionary)))):
-    idxes = np.nonzero(vals == i)
-    vecs = keys[idxes]
-    print(vecs.shape)
+for i in range(len(all_vecs)):
+    freq_mat[i, all_vocab_ids[i]] = 1
 
-# subsample for training kmeans
-rs = np.random.RandomState(1)
-idx = rs.choice(np.arange(first_zero_idx), size=int(0.2 * first_zero_idx), replace=False)
-to_cluster = to_cluster[idx]
-to_cluster = to_cluster.astype(np.float32)
 
-print('start cluster')
-ncentroids = dictionary.nspecial + ratio * (len(dictionary) - dictionary.nspecial)
-niter = 20
-verbose = True
+freq_mat = csr_matrix(freq_mat)
 
-kmeans = faiss.Kmeans(vec_dim, ncentroids, niter=niter, verbose=verbose, gpu=True, seed=1)
-kmeans.train(to_cluster)
+sparse.save_npz(ckpt_path + 'kmeans_2perword_freq.npz', freq_mat)
 
-np.save(ckpt_path + 'centroids.npy', kmeans.centroids)
+np.save(ckpt_path + 'kmeans_2perword.npy', all_vecs)
+np.save(ckpt_path + 'kmeans_2perword_obj.npy', objectives)
