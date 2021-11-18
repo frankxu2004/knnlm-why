@@ -46,7 +46,7 @@ for i in tqdm(range(len(dictionary))):
         idxes = rs.choice(idxes, sample_per_word, replace=False)
         vecs = keys[idxes]
         all_vecs.append(vecs)
-        all_vocab_ids.extend([i]*sample_per_word)
+        all_vocab_ids.extend([i] * sample_per_word)
 
 all_vecs = np.concatenate(all_vecs)
 

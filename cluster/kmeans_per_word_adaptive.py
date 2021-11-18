@@ -3,6 +3,7 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse import csr_matrix
 from tqdm import tqdm
+import heapq
 
 from fairseq.data import Dictionary
 
@@ -18,13 +19,18 @@ rs = np.random.RandomState(1)
 
 dictionary = Dictionary.load('data-bin/wikitext103-bpe/dict.txt')
 print(len(dictionary))
+threshold = ratio * len(dictionary)
 
 all_vecs = []
 all_vocab_ids = []
 all_num_vecs = []
 objectives = []
 
-for i in tqdm(range(len(dictionary))):
+prio_q = []
+
+all_to_cluster = {}
+# load data, initialize with 1 centroids
+for i in tqdm(range(33300, len(dictionary))):
     vecs = np.load('dstore/ids/' + str(i) + '.npy')
     num_vecs = len(vecs)
     if num_vecs > 0:
@@ -32,14 +38,22 @@ for i in tqdm(range(len(dictionary))):
         idx = rs.choice(np.arange(num_vecs), size=min(1000000, num_vecs), replace=False)
         to_cluster = vecs[idx]
         to_cluster = to_cluster.astype(np.float32)
-        ncentroids = 2
-        niter = 20
+        num_to_cluster = len(to_cluster)
+        all_to_cluster[i] = to_cluster
+        print(len(to_cluster))
+        centroid = np.mean(to_cluster, axis=0)
+        print(to_cluster - centroid)
+        variance = np.abs(to_cluster - centroid) **2
+        print(variance.shape)
+        exit()
+        ncentroids = 1
         use_gpu = True
-        if num_vecs < 10000:
+        if num_to_cluster < 10000:
             use_gpu = False
-        kmeans = faiss.Kmeans(vec_dim, ncentroids, niter=niter, verbose=False, gpu=use_gpu, seed=1)
+        kmeans = faiss.Kmeans(vec_dim, ncentroids, niter=10, verbose=False, gpu=use_gpu, seed=1)
         obj = kmeans.train(to_cluster)
         print(kmeans.centroids)
+        print(obj/num_to_cluster)
         objectives.append(obj)
         all_vecs.append(kmeans.centroids)
         all_vocab_ids.extend([i]*2)
