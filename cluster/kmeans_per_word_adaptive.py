@@ -2,6 +2,7 @@ import faiss
 import numpy as np
 from scipy import sparse
 from scipy.sparse import csr_matrix
+import torch
 from tqdm import tqdm
 import heapq
 
@@ -30,7 +31,7 @@ prio_q = []
 
 all_to_cluster = {}
 # load data, initialize with 1 centroids
-for i in tqdm(range(33300, len(dictionary))):
+for i in tqdm(range(len(dictionary))):
     vecs = np.load('dstore/ids/' + str(i) + '.npy')
     num_vecs = len(vecs)
     if num_vecs > 0:
@@ -38,41 +39,34 @@ for i in tqdm(range(33300, len(dictionary))):
         idx = rs.choice(np.arange(num_vecs), size=min(1000000, num_vecs), replace=False)
         to_cluster = vecs[idx]
         to_cluster = to_cluster.astype(np.float32)
-        num_to_cluster = len(to_cluster)
         all_to_cluster[i] = to_cluster
-        print(len(to_cluster))
         centroid = np.mean(to_cluster, axis=0)
-        print(to_cluster - centroid)
-        variance = np.abs(to_cluster - centroid) **2
-        print(variance.shape)
-        exit()
-        ncentroids = 1
-        use_gpu = True
-        if num_to_cluster < 10000:
-            use_gpu = False
-        kmeans = faiss.Kmeans(vec_dim, ncentroids, niter=10, verbose=False, gpu=use_gpu, seed=1)
-        obj = kmeans.train(to_cluster)
-        print(kmeans.centroids)
-        print(obj/num_to_cluster)
-        objectives.append(obj)
-        all_vecs.append(kmeans.centroids)
-        all_vocab_ids.extend([i]*2)
+        variance = np.sum((to_cluster - centroid) ** 2, axis=1).mean()
+        centroid = centroid.reshape(1, -1)
+        heapq.heappush(prio_q, (-variance, i, centroid))
 
-all_vecs = np.concatenate(all_vecs)
-objectives = np.array(objectives)
-print(all_vecs.shape)
+# pick highest within-cluster variance
+cluster_count = len(all_to_cluster)
+print(cluster_count, 'added')
 
-assert len(all_vecs) == len(all_vocab_ids)
+while cluster_count < threshold:
+    if cluster_count % 1000 == 0:
+        print('reached', cluster_count)
+    _, w, old_clusters = heapq.heappop(prio_q)
+    ncentroids = len(old_clusters) + 1
+    to_cluster = all_to_cluster[w]
+    num_to_cluster = len(to_cluster)
+    if num_to_cluster < ncentroids * 40:
+        # points too few, should not further cluster.
+        heapq.heappush(prio_q, (9999, w, old_clusters))
+        continue
+    use_gpu = True
+    if num_to_cluster < 10000:
+        use_gpu = False
+    kmeans = faiss.Kmeans(vec_dim, ncentroids, niter=20, verbose=False, gpu=use_gpu, seed=1)
+    obj = kmeans.train(to_cluster)
+    variance = obj / num_to_cluster
+    heapq.heappush(prio_q, (-variance, w, kmeans.centroids))
+    cluster_count += 1
 
-freq_mat = np.zeros((len(all_vecs), len(dictionary)))
-
-for i in range(len(all_vecs)):
-    freq_mat[i, all_vocab_ids[i]] = 1
-
-
-freq_mat = csr_matrix(freq_mat)
-
-sparse.save_npz(ckpt_path + 'kmeans_2perword_freq.npz', freq_mat)
-
-np.save(ckpt_path + 'kmeans_2perword.npy', all_vecs)
-np.save(ckpt_path + 'kmeans_2perword_obj.npy', objectives)
+torch.save(prio_q, ckpt_path + 'prio_q.pt')
