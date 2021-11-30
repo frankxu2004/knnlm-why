@@ -40,10 +40,10 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
             self.coef = torch.sparse_coo_tensor(indices, values.astype(np.float32),
                                     freq_mat.shape).coalesce()
             if torch.cuda.is_available() and not args.cpu:
-                self.coef = self.coef.cuda()
+                self.coef = self.coef.cuda().to_dense()
+
         print('coef is:')
-        print(self.coef)
-        print(self.coef.is_coalesced())
+        print(self.coef.sum())
 
     @staticmethod
     def initialize_projection_matrix(dictionary, ratio):
@@ -68,17 +68,19 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
                                        (vocab_size, num_out_emb_entries)).coalesce()
 
     def compute_loss(self, model, net_output, sample, reduce=True):
+        target = model.get_targets(sample, net_output).view(-1)
         if self.coef is None:
             lprobs = model.get_normalized_probs(net_output, log_probs=True)
         else:
             lprobs = model.get_normalized_probs(net_output, log_probs=False)
-            lprobs = lprobs.view(-1, lprobs.size(-1))
-            lprobs = torch.log(torch.clamp(torch.sparse.mm(self.coef, lprobs.T).T, min=1e-9))  # bsz x vocab
-        target = model.get_targets(sample, net_output).view(-1)
-        loss = F.nll_loss(
-            lprobs,
-            target,
-            ignore_index=self.padding_idx,
-            reduction='sum' if reduce else 'none',
-        )
+            lprobs = lprobs.view(-1, lprobs.size(-1))  # bsz x clusters
+            lprobs = torch.log(torch.clamp((self.coef[target]*lprobs).sum(-1), min=1e-9))  # bsz x vocab
+        loss = - lprobs.sum()
+
+        # loss = F.nll_loss(
+        #     lprobs,
+        #     target,
+        #     ignore_index=self.padding_idx,
+        #     reduction='sum' if reduce else 'none',
+        # )
         return loss, loss

@@ -201,6 +201,11 @@ def load_model_ensemble_and_task(filenames, arg_overrides=None, task=None):
 
         # build model for ensemble
         model = task.build_model(args)
+
+        # KNNLM-distill: handling replaced output embedding weight matrix shape
+        if model.decoder.embed_out.shape[0] != state["model"]['decoder.embed_out'].shape[0]:
+            model.decoder.embed_out = \
+                torch.nn.Parameter(model.decoder.embed_out.new(state["model"]['decoder.embed_out'].shape))
         model.load_state_dict(state["model"], strict=True, args=args)
         ensemble.append(model)
     return ensemble, args, task
