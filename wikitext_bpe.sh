@@ -138,6 +138,6 @@ python eval_lm.py data-bin/wikitext103-bpe \
     --gen-subset valid --dstore-filename checkpoints/wikitext103-bpe/dstore \
     --indexfile checkpoints/wikitext103-bpe/knn.index  \
     --model-overrides "{'knn_keytype': 'last_ffn_input'}" \
-    --k 1024 --lmbda 0.999999 --dstore-size 153225485 --knn-keytype last_ffn_input \
+    --k 1024 --lmbda 0.99 --dstore-size 153225485 --knn-keytype last_ffn_input \
     --knn-sim-func "do_not_recomp_l2" --no-load-keys \
     --probe 32 --knnlm --fp16 --dstore-fp16 --bpe subword_nmt --remove-bpe
