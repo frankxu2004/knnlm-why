@@ -120,6 +120,8 @@ class TransformerLanguageModel(FairseqLanguageModel):
                             help='k|V| output embedding matrix')
         parser.add_argument('--use-l2', action='store_true',
                             help='use l2 instead of dot product for output layer')
+        parser.add_argument('--norm-l2', action='store_true',
+                            help='l2 normalize query vector')
         # fmt: on
 
     @classmethod

@@ -35,14 +35,15 @@ vals = vals[:first_zero_idx]
 
 freq_mat = np.zeros((np.max(centroid_ids) + 1, len(dictionary)))
 
+# consider distance to centroid when counting frequency
 for centroid_id, word_id, dist in tqdm.tqdm(zip(centroid_ids, vals, dists)):
-    freq_mat[centroid_id, word_id] += 1
+    freq_mat[centroid_id, word_id] += 1 / (dist + 1e-2)
 
 freq_mat = csr_matrix(freq_mat)
 
-sparse.save_npz(ckpt_path + 'cluster_count.npz', freq_mat)
+sparse.save_npz(ckpt_path + 'cluster_count_idw.npz', freq_mat)
 
-freq_mat = sparse.load_npz(ckpt_path + 'cluster_count.npz')
+freq_mat = sparse.load_npz(ckpt_path + 'cluster_count_idw.npz')
 
 print('Sparsity:', 1 - freq_mat.getnnz() / np.prod(freq_mat.shape))
 
@@ -52,7 +53,7 @@ cluster_size = np.squeeze(np.asarray(cluster_size), axis=1)
 sums = np.repeat(cluster_size, freq_mat.getnnz(axis=1))
 freq_mat.data /= sums
 
-sparse.save_npz(ckpt_path + 'cluster_freq.npz', freq_mat)
+sparse.save_npz(ckpt_path + 'cluster_freq_idw.npz', freq_mat)
 
 k = 10
 
@@ -72,5 +73,5 @@ for idx in tqdm.tqdm(range(freq_mat.shape[0])):
     data.append(item)
 
 df = pd.DataFrame(data)
-df.to_csv(ckpt_path + 'cluster.csv')
+df.to_csv(ckpt_path + 'cluster_idw.csv')
 
