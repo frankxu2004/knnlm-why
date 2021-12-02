@@ -9,6 +9,16 @@ python eval_lm.py data-bin/wikitext103-bpe \
     --load-centroids checkpoints/wikitext103-bpe/centroids.npy \
     --load-centroid-distribution checkpoints/wikitext103-bpe/cluster_freq.npz
 
+## eval - spherical kmeans
+python eval_lm.py data-bin/wikitext103-bpe \
+    --path checkpoints/wikitext103-bpe/checkpoint_best.pt \
+    --sample-break-mode complete --max-tokens 3072 \
+    --context-window 2560 --softmax-batch 1024 \
+    --gen-subset valid --bpe subword_nmt --remove-bpe \
+    --model-overrides "{'knn_keytype': 'last_ffn_input', 'use_last_ffn_input': True}" \
+    --load-centroids checkpoints/wikitext103-bpe/spherical_centroids.npy \
+    --load-centroid-distribution checkpoints/wikitext103-bpe/spherical_cluster_freq.npz
+
 
 ## eval - word centroid
 python eval_lm.py data-bin/wikitext103-bpe \

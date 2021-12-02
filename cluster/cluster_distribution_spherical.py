@@ -12,8 +12,8 @@ ckpt_path = 'checkpoints/wikitext103-bpe/'
 
 dictionary = Dictionary.load('data-bin/wikitext103-bpe/dict.txt')
 
-dists = np.load(ckpt_path + 'dist.npy')
-centroid_ids = np.load(ckpt_path + 'centroid_ids.npy')
+dists = np.load(ckpt_path + 'spherical_dist.npy')
+centroid_ids = np.load(ckpt_path + 'spherical_centroid_ids.npy')
 
 vals_from_memmap = np.memmap(ckpt_path + 'dstore_vals.npy',
                              dtype=np.int64, mode='r', shape=(dstore_size, 1))
@@ -35,15 +35,14 @@ vals = vals[:first_zero_idx]
 
 freq_mat = np.zeros((np.max(centroid_ids) + 1, len(dictionary)))
 
-for centroid_id, word_id, dist in tqdm.tqdm(zip(centroid_ids, vals, dists)):
-    print(dist)
+for centroid_id, word_id in tqdm.tqdm(zip(centroid_ids, vals)):
     freq_mat[centroid_id, word_id] += 1
-exit()
+
 freq_mat = csr_matrix(freq_mat)
 
-sparse.save_npz(ckpt_path + 'cluster_count.npz', freq_mat)
+sparse.save_npz(ckpt_path + 'spherical_cluster_count.npz', freq_mat)
 
-freq_mat = sparse.load_npz(ckpt_path + 'cluster_count.npz')
+freq_mat = sparse.load_npz(ckpt_path + 'spherical_cluster_count.npz')
 
 print('Sparsity:', 1 - freq_mat.getnnz() / np.prod(freq_mat.shape))
 
@@ -53,7 +52,7 @@ cluster_size = np.squeeze(np.asarray(cluster_size), axis=1)
 sums = np.repeat(cluster_size, freq_mat.getnnz(axis=1))
 freq_mat.data /= sums
 
-sparse.save_npz(ckpt_path + 'cluster_freq.npz', freq_mat)
+sparse.save_npz(ckpt_path + 'spherical_cluster_freq.npz', freq_mat)
 
 k = 10
 
@@ -73,5 +72,5 @@ for idx in tqdm.tqdm(range(freq_mat.shape[0])):
     data.append(item)
 
 df = pd.DataFrame(data)
-df.to_csv(ckpt_path + 'cluster.csv')
+df.to_csv(ckpt_path + 'spherical_cluster.csv')
 
