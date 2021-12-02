@@ -860,9 +860,9 @@ class TransformerDecoder(FairseqIncrementalDecoder):
     def output_layer(self, features):
         """Project features to the vocabulary size."""
         if self.adaptive_softmax is None:
-            # L2 normalize?
             if self.norm_l2:
-
+                # L2 normalize?
+                features = F.normalize(features, dim=-1)
             # project back to size of vocabulary
             if self.share_input_output_embed:
                 return F.linear(features, self.embed_tokens.weight)
