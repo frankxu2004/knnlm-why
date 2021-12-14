@@ -38,7 +38,7 @@ class SequenceScorer(object):
             values = freq_mat.data
             indices = np.vstack((freq_mat.row, freq_mat.col))
             self.coef = torch.sparse_coo_tensor(indices, values.astype(np.float32),
-                                    freq_mat.shape).coalesce()
+                                                freq_mat.shape).coalesce()
             if torch.cuda.is_available() and not args.cpu:
                 self.coef = self.coef.cuda()
         print('coef is:')
@@ -128,16 +128,16 @@ class SequenceScorer(object):
                     raise ValueError('Only knn *log* probs are supported.')
 
                 yhat_knn_prob = dstore.get_knn_log_prob(
-                        queries,
-                        orig_target.permute(1, 0),
-                        pad_idx=self.pad)
+                    queries,
+                    orig_target.permute(1, 0),
+                    pad_idx=self.pad)
                 yhat_knn_prob = yhat_knn_prob.permute(1, 0, 2).squeeze(-1)
                 if self.args.fp16:
                     yhat_knn_prob = yhat_knn_prob.half()
                     probs = probs.half()
 
                 probs = combine_knn_and_vocab_probs(
-                            yhat_knn_prob, probs, self.args.lmbda)
+                    yhat_knn_prob, probs, self.args.lmbda)
 
             if avg_probs is None:
                 avg_probs = probs
@@ -164,6 +164,8 @@ class SequenceScorer(object):
                 if sample['target'] is not None else None
             tgt_len = ref.numel()
             avg_probs_i = avg_probs[i][start_idxs[i]:start_idxs[i] + tgt_len]
+            if 'knn_dstore' in kwargs:
+                knn_probs_i = yhat_knn_prob[i][start_idxs[i]:start_idxs[i] + tgt_len]
             score_i = avg_probs_i.sum() / tgt_len
             if avg_attn is not None:
                 avg_attn_i = avg_attn[i]
@@ -185,6 +187,8 @@ class SequenceScorer(object):
                 'attention': avg_attn_i,
                 'alignment': alignment,
                 'positional_scores': avg_probs_i,
-                'dstore_keys': decoder_out[1][self.args.knn_keytype][start_idxs[i]:,i,:] if self.args.save_knnlm_dstore else None,
+                'dstore_keys': decoder_out[1][self.args.knn_keytype][start_idxs[i]:, i,
+                               :] if self.args.save_knnlm_dstore else None,
+                'knn_probs': knn_probs_i if 'knn_dstore' in kwargs else None,
             }])
         return hypos

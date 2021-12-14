@@ -176,6 +176,7 @@ def main(parsed_args):
 
         all_token_ids = []
         all_scores = []
+        all_knn_scores = []
         for ex_i, sample in enumerate(t):
             if 'net_input' not in sample:
                 continue
@@ -220,10 +221,17 @@ def main(parsed_args):
                 tgt_len = tokens.numel()
                 pos_scores = hypo['positional_scores'].float()
 
+                if args.knnlm:
+                    knn_scores = hypo['knn_probs'].float()
+                    all_knn_scores.append(knn_scores.cpu().numpy())
+
                 if args.add_bos_token:
                     assert hypo['tokens'][0].item() == task.target_dictionary.bos()
                     tokens = tokens[1:]
                     pos_scores = pos_scores[1:]
+
+                if args.knnlm:
+                    assert len(knn_scores) == len(pos_scores)
 
                 all_token_ids.append(tokens.cpu().numpy())
                 all_scores.append(pos_scores.cpu().numpy())
@@ -284,9 +292,6 @@ def main(parsed_args):
         print("Keys", dstore_keys.shape, dstore_keys.dtype)
         print("Vals", dstore_vals.shape, dstore_vals.dtype)
 
-    # np.save('knnlm_tokens.npy', np.concatenate(all_token_ids))
-    # np.save('knnlm_scores.npy', np.concatenate(all_scores))
-
     avg_nll_loss = -score_sum / count / math.log(2)  # convert to base 2
     logger.info('Evaluated {} tokens in {:.1f}s ({:.2f} tokens/s)'.format(
         gen_timer.n, gen_timer.sum, 1. / gen_timer.avg
@@ -294,6 +299,11 @@ def main(parsed_args):
     logger.info('Loss (base 2): {:.4f}, Perplexity: {:.2f}'.format(
         avg_nll_loss, 2**avg_nll_loss
     ))
+
+    # np.save('knnlm_tokens.npy', np.concatenate(all_token_ids))
+    # np.save('knnlm_scores.npy', np.concatenate(all_scores))
+    if all_knn_scores:
+        np.save('knn_only_scores.npy', np.concatenate(all_knn_scores))
 
     if args.output_word_stats:
         for ws in sorted(word_stats.values(), key=lambda x: x.count, reverse=True):
