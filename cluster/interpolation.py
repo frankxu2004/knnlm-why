@@ -14,24 +14,28 @@ bpe_toks = {
     for i in range(len(dictionary))
     if dictionary[i].endswith(bpe_cont)
 }
+
 bpe_len = len(bpe_cont)
 
 tokens = np.load('tokens.npy')
-scores = np.load('scores.npy')
+lm_scores = np.load('scores.npy')
 kmeans_tokens = np.load('kmeans_tokens.npy')
 kmeans_scores = np.load('kmeans_scores.npy')
+knn_scores = np.load('knn_only_scores.npy')
 
-assert len(tokens) == len(scores)
+assert len(tokens) == len(lm_scores)
 assert len(kmeans_tokens) == len(tokens)
+assert len(knn_scores) == len(tokens)
 
+# kmeans_scores = knn_scores
 
-scores = torch.from_numpy(scores)
+lm_scores = torch.from_numpy(lm_scores)
 kmeans_scores = torch.from_numpy(kmeans_scores)
 
-with open('interpolation_result.txt', 'w') as outfile:
-    for lmbda in np.linspace(0.0, 1.0, num=50):
+combine_probs = torch.stack([lm_scores, kmeans_scores], dim=0)
 
-        combine_probs = torch.stack([scores, kmeans_scores], dim=0)
+with open('interpolation_result.txt', 'w') as outfile:
+    for lmbda in np.linspace(0.0, 0.99, num=50):
         coeffs = torch.ones_like(combine_probs)
         coeffs[0] = np.log(1 - lmbda)
         coeffs[1] = np.log(lmbda)
