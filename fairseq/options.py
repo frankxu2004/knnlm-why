@@ -510,6 +510,8 @@ def add_eval_lm_args(parser):
                         help='centroids npy file path')
     parser.add_argument('--load-centroid-distribution', type=str, default='',
                         help='freq_mat npz file path')
+    parser.add_argument('--centroid-scale', type=float, default=1.,
+                        help='centroids scaling')
 
 
     # fmt: on

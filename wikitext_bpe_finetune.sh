@@ -39,3 +39,10 @@ CUDA_VISIBLE_DEVICES=6,7 python train.py --task language_modeling \
   --warmup-updates 8000 --warmup-init-lr 1e-07 --min-lr 1e-09 --optimizer nag --lr 0.0001 --clip-norm 0.1 \
   --max-tokens 3072 --update-freq 12 --tokens-per-sample 3072 --seed 1 \
   --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16
+
+# eval finetuned
+python eval_lm.py data-bin/wikitext103-bpe --path checkpoints/wikitext103-bpe-centroid-finetune-longer/checkpoint_last.pt \
+    --sample-break-mode complete --max-tokens 3072  --context-window 2560 --softmax-batch 1024  \
+    --gen-subset valid --bpe subword_nmt --remove-bpe  \
+    --model-overrides "{'knn_keytype': 'last_ffn_input', 'use_last_ffn_input': True}"   \
+    --load-centroid-distribution checkpoints/wikitext103-bpe/cluster_freq.npz

@@ -24,51 +24,83 @@ kmeans_tokens = np.load('kmeans_tokens.npy')
 kmeans_scores = np.load('kmeans_scores.npy')
 knn_scores = np.load('knn_only_scores.npy')
 
+finetuned_centroid_scores = np.load('finetuned_centroids_scores.npy')
+
+
 assert len(tokens) == len(lm_scores)
 assert len(kmeans_tokens) == len(tokens)
 assert len(knn_scores) == len(tokens)
+assert len(finetuned_centroid_scores) == len(tokens)
 
 
 # calculate unigram probability
-unigram_prob = np.load('unigram_prob.npy')
-unigram_scores = np.zeros(len(tokens))
+# unigram_prob = np.load('unigram_prob.npy')
+# unigram_scores = np.zeros(len(tokens))
+#
+# for idx in range(1, len(tokens)):
+#     unigram_scores[idx] = np.log(unigram_prob[tokens[idx-1], tokens[idx]] + 1e-5)
+#
+# unigram_scores = unigram_scores.astype(np.float32)
+# unigram_scores = torch.from_numpy(unigram_scores)
 
-for idx in range(1, len(tokens)):
-    unigram_scores[idx] = np.log(unigram_prob[tokens[idx-1], tokens[idx]] + 1e-5)
+# kmeans_scores = knn_scores
 
-unigram_scores = unigram_scores.astype(np.float32)
-
-kmeans_scores = knn_scores
+kmeans_scores = finetuned_centroid_scores
 
 lm_scores = torch.from_numpy(lm_scores)
 kmeans_scores = torch.from_numpy(kmeans_scores)
-unigram_scores = torch.from_numpy(unigram_scores)
 
-combine_probs = torch.stack([lm_scores, kmeans_scores, unigram_scores], dim=0)
+combine_probs = torch.stack([lm_scores, kmeans_scores], dim=0)
 
-with open('unigram_interpolation_result.txt', 'w') as outfile:
-    for lmbda1 in tqdm(np.linspace(0.01, 0.5, num=100)):
-        for lmbda2 in np.linspace(0.0001, 0.01, num=100):
-            coeffs = torch.ones_like(combine_probs)
-            coeffs[0] = np.log(1 - lmbda1 - lmbda2)
-            coeffs[1] = np.log(lmbda1)
-            coeffs[2] = np.log(lmbda2)
+with open('finetuned_interpolation_result.txt', 'w') as outfile:
+    for lmbda in tqdm(np.linspace(0.0, 0.99, num=50)):
+        coeffs = torch.ones_like(combine_probs)
+        coeffs[0] = np.log(1 - lmbda)
+        coeffs[1] = np.log(lmbda)
 
-            scores = torch.logsumexp(combine_probs + coeffs, dim=0)
+        scores = torch.logsumexp(combine_probs + coeffs, dim=0)
 
-            score_sum = 0.
-            count = 0
+        score_sum = 0.
+        count = 0
 
-            tgt_len = tokens.size
-            skipped_toks = 0
-            for i in range(tgt_len - 1):
-                if tokens[i].item() in bpe_toks:
-                    skipped_toks += 1
-                    scores[i + 1] += scores[i]
-                    scores[i] = 0
+        tgt_len = tokens.size
+        skipped_toks = 0
+        for i in range(tgt_len - 1):
+            if tokens[i].item() in bpe_toks:
+                skipped_toks += 1
+                scores[i + 1] += scores[i]
+                scores[i] = 0
 
-            score_sum += scores.sum()
-            count += scores.numel() - skipped_toks
+        score_sum += scores.sum()
+        count += scores.numel() - skipped_toks
 
-            avg_nll_loss = -score_sum / count / math.log(2)  # convert to base 2
-            outfile.write(str(lmbda1) + '\t' + str(lmbda2) + '\t' + str(2**avg_nll_loss.item()) + '\n')
+        avg_nll_loss = -score_sum / count / math.log(2)  # convert to base 2
+        outfile.write(str(lmbda) + '\t' + str(2**avg_nll_loss.item()) + '\n')
+
+# combine_probs = torch.stack([lm_scores, kmeans_scores, unigram_scores], dim=0)
+# with open('unigram_interpolation_result.txt', 'w') as outfile:
+#     for lmbda1 in tqdm(np.linspace(0.01, 0.5, num=100)):
+#         for lmbda2 in np.linspace(0.0001, 0.01, num=100):
+#             coeffs = torch.ones_like(combine_probs)
+#             coeffs[0] = np.log(1 - lmbda1 - lmbda2)
+#             coeffs[1] = np.log(lmbda1)
+#             coeffs[2] = np.log(lmbda2)
+#
+#             scores = torch.logsumexp(combine_probs + coeffs, dim=0)
+#
+#             score_sum = 0.
+#             count = 0
+#
+#             tgt_len = tokens.size
+#             skipped_toks = 0
+#             for i in range(tgt_len - 1):
+#                 if tokens[i].item() in bpe_toks:
+#                     skipped_toks += 1
+#                     scores[i + 1] += scores[i]
+#                     scores[i] = 0
+#
+#             score_sum += scores.sum()
+#             count += scores.numel() - skipped_toks
+#
+#             avg_nll_loss = -score_sum / count / math.log(2)  # convert to base 2
+#             outfile.write(str(lmbda1) + '\t' + str(lmbda2) + '\t' + str(2**avg_nll_loss.item()) + '\n')

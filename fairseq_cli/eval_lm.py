@@ -102,6 +102,7 @@ def main(parsed_args):
     if args.load_centroids:
         print('Loading centroids from file:', args.load_centroids)
         centroids = np.load(args.load_centroids).astype(np.float32)
+        centroids = args.centroid_scale * centroids
         models[0].decoder.embed_out = torch.nn.Parameter(torch.from_numpy(centroids))
 
     # Optimize ensemble for generation and set the source and dest dicts on the model (required by scorer)
@@ -301,7 +302,7 @@ def main(parsed_args):
     ))
 
     # np.save('knnlm_tokens.npy', np.concatenate(all_token_ids))
-    # np.save('knnlm_scores.npy', np.concatenate(all_scores))
+    # np.save('finetuned_centroids_scores.npy', np.concatenate(all_scores))
     if all_knn_scores:
         np.save('knn_only_scores.npy', np.concatenate(all_knn_scores))
 
