@@ -302,9 +302,9 @@ def main(parsed_args):
     ))
 
     # np.save('knnlm_tokens.npy', np.concatenate(all_token_ids))
-    # np.save('finetuned_centroids_scores.npy', np.concatenate(all_scores))
+    # np.save('overfit_lm_scores_' + parsed_args.path.split('/')[-1].split('.')[0] + '.npy', np.concatenate(all_scores))
     if all_knn_scores:
-        np.save('knn_only_scores.npy', np.concatenate(all_knn_scores))
+        np.save('recompute_knn_only_scores.npy', np.concatenate(all_knn_scores))
 
     if args.output_word_stats:
         for ws in sorted(word_stats.values(), key=lambda x: x.count, reverse=True):

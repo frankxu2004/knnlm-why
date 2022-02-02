@@ -175,9 +175,9 @@ class Trainer(object):
             state = checkpoint_utils.load_checkpoint_to_cpu(filename)
 
             # KNNLM-distill: handling replaced output embedding weight matrix shape
-            if self.get_model().decoder.embed_out.shape[0] != state["model"]['decoder.embed_out'].shape[0]:
-                self.get_model().decoder.embed_out = \
-                    torch.nn.Parameter(self.get_model().decoder.embed_out.new(state["model"]['decoder.embed_out'].shape))
+            # if self.get_model().decoder.embed_out.shape[0] != state["model"]['decoder.embed_out'].shape[0]:
+            #     self.get_model().decoder.embed_out = \
+            #         torch.nn.Parameter(self.get_model().decoder.embed_out.new(state["model"]['decoder.embed_out'].shape))
 
             # load model parameters
             try:
