@@ -20,7 +20,7 @@ bpe_len = len(bpe_cont)
 
 tokens = np.load('tokens.npy')
 lm_scores = np.load('scores.npy')
-knn_scores = np.load('knn_only_scores.npy')
+knn_scores = np.load('overfit_lm_scores_checkpoint15.npy')
 
 assert len(tokens) == len(lm_scores)
 assert len(knn_scores) == len(tokens)
@@ -41,7 +41,7 @@ knn_scores = torch.from_numpy(knn_scores)
 
 combine_probs = torch.stack([lm_scores, knn_scores], dim=0)
 
-with open('small_interpolation_result.txt', 'w') as outfile:
+with open('overfit15_interpolation_result.txt', 'w') as outfile:
     for lmbda in tqdm(np.linspace(0.0, 0.99, num=50)):
         coeffs = torch.ones_like(combine_probs)
         coeffs[0] = np.log(1 - lmbda)
