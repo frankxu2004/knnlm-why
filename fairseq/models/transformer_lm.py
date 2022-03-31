@@ -122,6 +122,9 @@ class TransformerLanguageModel(FairseqLanguageModel):
                             help='use l2 instead of dot product for output layer')
         parser.add_argument('--norm-l2', action='store_true',
                             help='l2 normalize query vector')
+        parser.add_argument('--additional-linear', action='store_true',
+                            help='add additional linear layer')
+
         # fmt: on
 
     @classmethod

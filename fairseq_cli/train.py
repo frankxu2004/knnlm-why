@@ -72,6 +72,20 @@ def main(args, init_distributed=False):
             if name != 'decoder.embed_out':
                 param.requires_grad = False
 
+    # if only tune centroid matrix
+    if args.finetune_centroids:
+        print('Finetune only centroid matrix!!!')
+        for name, param in model.named_parameters():
+            if name != 'decoder.embed_out':
+                param.requires_grad = False
+
+    # if only tune centroid matrix
+    if args.additional_linear:
+        print('Finetune only additional linear embedding!!!')
+        for name, param in model.named_parameters():
+            if name != 'decoder.additional_embed':
+                param.requires_grad = False
+
     logger.info('model {}, criterion {}'.format(args.arch, criterion.__class__.__name__))
     logger.info('num. model params: {} (num. trained: {})'.format(
         sum(p.numel() for p in model.parameters()),

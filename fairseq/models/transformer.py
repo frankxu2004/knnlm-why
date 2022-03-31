@@ -657,6 +657,12 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
             nn.init.normal_(self.embed_out, mean=0, std=self.output_embed_dim ** -0.5)
 
+        # add another embedding for last_ffn_input
+        self.additional_linear = args.additional_linear
+        if self.additional_linear:
+            self.additional_embed = nn.Parameter(torch.Tensor(len(dictionary), self.output_embed_dim))
+            nn.init.normal_(self.additional_embed, mean=0, std=self.output_embed_dim ** -0.5)
+
         if args.decoder_normalize_before and not getattr(
             args, "no_decoder_final_norm", False
         ):
@@ -708,6 +714,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         )
         if self.use_last_ffn_input:
             x = extra['last_ffn_input'].permute(1, 0, 2)
+        if self.additional_linear:
+            x = (x, extra['last_ffn_input'].permute(1, 0, 2))
         if not features_only:
             x = self.output_layer(x)
         return x, extra
@@ -872,6 +880,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 embed_norms = torch.sum(self.embed_out**2, dim=-1).view(1, 1, -1)
                 l2 = 2 * dot_product - features_norms - embed_norms
                 return l2
+            elif self.additional_linear:
+                return F.linear(features[0], self.embed_out) + F.linear(features[1], self.additional_embed)
             else:
                 return F.linear(features, self.embed_out)
         else:
