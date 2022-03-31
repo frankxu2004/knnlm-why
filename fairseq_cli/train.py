@@ -65,22 +65,16 @@ def main(args, init_distributed=False):
     criterion = task.build_criterion(args)
 
     logger.info(model)
-    # if only tune centroid matrix
-    if args.finetune_centroids:
-        print('Finetune only centroid matrix!!!')
+
+    # if only tune output embedding
+    if args.finetune_out_embed:
+        print('Finetune only output embedding matrix!')
         for name, param in model.named_parameters():
             if name != 'decoder.embed_out':
                 param.requires_grad = False
 
-    # if only tune centroid matrix
-    if args.finetune_centroids:
-        print('Finetune only centroid matrix!!!')
-        for name, param in model.named_parameters():
-            if name != 'decoder.embed_out':
-                param.requires_grad = False
-
-    # if only tune centroid matrix
-    if args.additional_linear:
+    # if only tune additional layer
+    if args.finetune_additional_linear:
         print('Finetune only additional linear embedding!!!')
         for name, param in model.named_parameters():
             if name != 'decoder.additional_embed':

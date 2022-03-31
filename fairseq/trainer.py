@@ -174,18 +174,13 @@ class Trainer(object):
         if bexists:
             state = checkpoint_utils.load_checkpoint_to_cpu(filename)
 
-            # KNNLM-distill: handling replaced output embedding weight matrix shape
-            # if self.get_model().decoder.embed_out.shape[0] != state["model"]['decoder.embed_out'].shape[0]:
-            #     self.get_model().decoder.embed_out = \
-            #         torch.nn.Parameter(self.get_model().decoder.embed_out.new(state["model"]['decoder.embed_out'].shape))
-
             # load model parameters
             try:
-                strict = True
-                if self.args.additional_linear:
-                    strict = False
+                # strict = True
+                # if self.args.additional_linear:
+                #     strict = False
                 self.get_model().load_state_dict(
-                    state["model"], strict=strict, args=self.args
+                    state["model"], strict=True, args=self.args
                 )
                 if utils.has_parameters(self.get_criterion()):
                     self.get_criterion().load_state_dict(

@@ -34,7 +34,8 @@ count = len(tokens) - skipped_toks
 
 knn_helping = 0
 with open('kv_interpolation.txt', 'w') as outfile:
-    for f in ['best_knn_only_scores.npy', 'kv_scores/2v_scores.npy', 'kv_scores/3v_scores.npy']:
+    for f in ['best_knn_only_scores.npy', 'kv_scores/2v_scores.npy',
+              'kv_scores/3v_scores.npy', 'additional_linear_scores/add_linear_scores.npy']:
         overfit_scores = np.load(f)
         overfit_scores = torch.from_numpy(overfit_scores).cuda()
         combine_probs = torch.stack([lm_scores, overfit_scores], dim=0)
