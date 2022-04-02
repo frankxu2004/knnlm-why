@@ -35,7 +35,9 @@ count = len(tokens) - skipped_toks
 knn_helping = 0
 with open('kv_interpolation.txt', 'w') as outfile:
     for f in ['best_knn_only_scores.npy', 'kv_scores/2v_scores.npy',
-              'kv_scores/3v_scores.npy', 'additional_linear_scores/add_linear_scores.npy']:
+              'kv_scores/3v_scores.npy',
+              'additional_linear_scores/add_linear_scores.npy',
+              'additional_linear_scores/additional_softmax_scores.npy']:
         overfit_scores = np.load(f)
         overfit_scores = torch.from_numpy(overfit_scores).cuda()
         combine_probs = torch.stack([lm_scores, overfit_scores], dim=0)
@@ -48,8 +50,11 @@ with open('kv_interpolation.txt', 'w') as outfile:
             knn_helping = argmaxs
 
         match_knn = torch.sum(argmaxs == knn_helping).item() / len(tokens)
+        extra_helping_percentage = torch.sum(argmaxs).item() / len(tokens)
 
-        knn_helping_scores = -(combine_probs[0][knn_helping == 0].sum() + combine_probs[1][knn_helping == 1].sum())
+        knn_helping_scores = -(combine_probs[0][knn_helping == 0].sum() +
+                               combine_probs[1][knn_helping == 1].sum())
+
         knn_helping_ppl = torch.exp(knn_helping_scores / count)
 
         best_ppl = 1e10
@@ -69,4 +74,6 @@ with open('kv_interpolation.txt', 'w') as outfile:
                 best_ppl = ppl
                 best_lmbda = lmbda
 
-        outfile.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(f, best_lmbda, best_ppl, oracle_ppl, match_knn, knn_helping_ppl))
+        outfile.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(f, best_lmbda, best_ppl, oracle_ppl,
+                                                            match_knn, extra_helping_percentage,
+                                                            knn_helping_ppl))

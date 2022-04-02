@@ -14,6 +14,7 @@ import math
 import os
 import sys
 from typing import Any, Dict, List
+import torch.nn as nn
 
 import torch
 
@@ -176,11 +177,11 @@ class Trainer(object):
 
             # load model parameters
             try:
-                # strict = True
-                # if self.args.additional_linear:
-                #     strict = False
+                strict = True
+                if self.args.additional_linear:
+                    strict = False
                 self.get_model().load_state_dict(
-                    state["model"], strict=True, args=self.args
+                    state["model"], strict=strict, args=self.args
                 )
                 if utils.has_parameters(self.get_criterion()):
                     self.get_criterion().load_state_dict(
@@ -201,6 +202,9 @@ class Trainer(object):
                 if self.args.fp16:
                     centroids = centroids.half()
                 self.get_model().decoder.embed_out = torch.nn.Parameter(centroids)
+
+            if self.args.init_out_embed:
+                nn.init.normal_(self.get_model().decoder.embed_out, mean=0, std=self.args.decoder_output_dim ** -0.5)
 
             extra_state = state["extra_state"]
             self._optim_history = state["optimizer_history"]

@@ -410,8 +410,10 @@ def add_optimization_args(parser):
                         help='centroids npy file path')
     parser.add_argument('--load-centroid-distribution', type=str, default='',
                         help='freq_mat npz file path')
-    parser.add_argument('--use-last-ffn-input', action='store_true',
+    parser.add_argument('--use-last-ffn-input', default=False,  action='store_true',
                         help='if set, use last ffn input to multiply weight matrix')
+    parser.add_argument('--init-out-embed', default=False,  action='store_true',
+                        help='if set, re-initialize output embedding')
 
     # fmt: on
     return group

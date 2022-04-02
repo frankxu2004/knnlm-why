@@ -28,11 +28,30 @@ python eval_lm.py data-bin/wikitext103-bpe --path checkpoints/wikitext103-bpe-ad
 
 
 ## after softmax
-CUDA_VISIBLE_DEVICES=1,2,4,5,6,7 python train.py --task language_modeling \
+CUDA_VISIBLE_DEVICES=4,5,7 python train.py --task language_modeling \
     data-bin/wikitext103-bpe \
   --save-dir checkpoints/wikitext103-bpe-additional-linear-after-softmax \
-  --arch transformer_lm_wikibpe --restore-file checkpoints/wikitext103-bpe-additional-linear-after-softmax/checkpoint_best.pt \
+  --arch transformer_lm_wikibpe \
+  --restore-file checkpoints/wikitext103-bpe-additional-linear-after-softmax/checkpoint_last.pt \
   --knn-keytype last_ffn_input --use-last-ffn-input --finetune-out-embed \
+  --max-update 286000 --optimizer nag --lr 5e-2 --clip-norm 100 \
+  --max-tokens 36864 --update-freq 1 --tokens-per-sample 3072 --seed 1 \
+  --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16
+
+# eval finetuned
+python eval_lm.py data-bin/wikitext103-bpe --path checkpoints/wikitext103-bpe-additional-linear-after-softmax/checkpoint_best.pt \
+    --sample-break-mode complete --max-tokens 3072  --context-window 2560 --softmax-batch 1024  \
+    --gen-subset valid --bpe subword_nmt --remove-bpe  \
+    --model-overrides "{'knn_keytype': 'last_ffn_input', 'use_last_ffn_input': True}"
+
+
+## after softmax, reinit
+CUDA_VISIBLE_DEVICES=1,2,4,5,6,7 python train.py --task language_modeling \
+    data-bin/wikitext103-bpe \
+  --save-dir checkpoints/wikitext103-bpe-additional-linear-after-softmax-reinit \
+  --arch transformer_lm_wikibpe --restore-file checkpoints/wikitext103-bpe/checkpoint_best.pt \
+  --knn-keytype last_ffn_input --use-last-ffn-input --finetune-out-embed --init-out-embed \
+  --reset-optimizer --reset-dataloader --reset-meters \
   --max-update 286000 --optimizer nag --lr 1e-2 --clip-norm 100 \
   --max-tokens 12288 --update-freq 1 --tokens-per-sample 3072 --seed 1 \
   --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16
