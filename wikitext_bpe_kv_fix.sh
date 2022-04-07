@@ -1,12 +1,12 @@
 # k=2
-CUDA_VISIBLE_DEVICES=4,5,6 python train.py --task language_modeling \
+python train.py --task language_modeling \
     data-bin/wikitext103-bpe \
   --save-dir checkpoints/wikitext103-bpe-kv2-fix \
   --arch transformer_lm_wikibpe  --restore-file checkpoints/wikitext103-bpe/checkpoint_best.pt \
   --reset-optimizer --reset-dataloader --reset-meters \
   --finetune-out-embed --pseudo-vocab-ratio 2 --criterion agg_softmax \
-  --max-update 28600 --optimizer nag --lr 1e-3 --clip-norm 100 \
-  --max-tokens 3072 --update-freq 6 --tokens-per-sample 3072 --seed 1 \
+  --max-update 286000 --optimizer nag --lr 5e-2 --clip-norm 100 \
+  --max-tokens 9216 --update-freq 1 --tokens-per-sample 3072 --seed 1 \
   --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16
 
 
