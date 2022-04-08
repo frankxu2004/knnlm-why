@@ -516,6 +516,9 @@ def add_eval_lm_args(parser):
                         help='freq_mat npz file path')
     parser.add_argument('--centroid-scale', type=float, default=1.,
                         help='centroids scaling')
+    parser.add_argument('--save-scores', type=str, default='',
+                        help='scores npy file path to save')
+
 
 
     # fmt: on

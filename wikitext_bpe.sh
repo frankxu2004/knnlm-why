@@ -28,7 +28,7 @@ python train.py --task language_modeling \
   --max-tokens 3072 --update-freq 3 --tokens-per-sample 3072 --seed 1 \
   --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16
 
-# non tied change seed
+# non tied change seed 3
 python train.py --task language_modeling \
     data-bin/wikitext103-bpe \
   --save-dir checkpoints/wikitext103-bpe \
