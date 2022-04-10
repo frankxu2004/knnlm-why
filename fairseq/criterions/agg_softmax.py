@@ -29,7 +29,7 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
             # one-hot coef
             self.coef = self.initialize_projection_matrix(task.target_dictionary, args.pseudo_vocab_ratio)
             if torch.cuda.is_available() and not args.cpu:
-                self.coef = self.coef.cuda().to_dense()
+                self.coef = self.coef.cuda()
         if args.load_centroid_distribution:
             # load prior coef
             from scipy import sparse
@@ -74,7 +74,7 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
         else:
             lprobs = model.get_normalized_probs(net_output, log_probs=False)
             lprobs = lprobs.view(-1, lprobs.size(-1))  # bsz x clusters
-            lprobs = torch.log(torch.clamp((self.coef[target] * lprobs).sum(-1), min=1e-9))  # bsz x vocab
+            lprobs = torch.log(torch.clamp((self.coef.select(target) * lprobs).sum(-1), min=1e-9))  # bsz x vocab
         loss = - lprobs.sum()
 
         # loss = F.nll_loss(
