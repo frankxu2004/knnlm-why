@@ -55,7 +55,7 @@ python eval_lm.py data-bin/wikitext103-bpe \
 
 
 # k=5
-python train.py --task language_modeling \
+CUDA_VISIBLE_DEVICES=1 python train.py --task language_modeling \
     data-bin/wikitext103-bpe \
   --save-dir checkpoints/wikitext103-bpe-kv5-fix \
   --arch transformer_lm_wikibpe  --restore-file checkpoints/wikitext103-bpe/checkpoint_best.pt \
