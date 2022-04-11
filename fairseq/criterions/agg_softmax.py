@@ -75,7 +75,6 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
         else:
             lprobs = model.get_normalized_probs(net_output, log_probs=False)
             lprobs = lprobs.view(-1, lprobs.size(-1))  # bsz x clusters
-            print(target.shape)
             lprobs = torch.log(torch.clamp((self.coef[target] * lprobs).sum(-1), min=1e-9))  # bsz x vocab
         loss = - lprobs.sum()
 
