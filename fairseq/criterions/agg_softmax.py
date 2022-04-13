@@ -3,14 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import math
-
-import torch.nn.functional as F
-import torch
 import numpy as np
-from torch import nn
+import torch
 
-from fairseq import metrics, utils
 from fairseq.criterions import register_criterion
 from fairseq.criterions.cross_entropy import CrossEntropyCriterion
 
@@ -28,7 +23,7 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
             print('Using one hot cluster distribution with K=', args.pseudo_vocab_ratio)
             # one-hot coef
             self.coef = self.initialize_projection_matrix(task.target_dictionary, args.pseudo_vocab_ratio)
-            self.coef = self.coef.to_dense().bool()
+            self.coef = self.coef.bool().to_dense()  # save memory using bool for one hot
             if torch.cuda.is_available() and not args.cpu:
                 self.coef = self.coef.cuda()
         if args.load_centroid_distribution:
@@ -39,9 +34,9 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
             values = freq_mat.data
             indices = np.vstack((freq_mat.row, freq_mat.col))
             self.coef = torch.sparse_coo_tensor(indices, values.astype(np.float32),
-                                                freq_mat.shape).coalesce()
+                                                freq_mat.shape).coalesce().to_dense()
             if torch.cuda.is_available() and not args.cpu:
-                self.coef = self.coef.cuda().to_dense()
+                self.coef = self.coef.cuda()
 
         print('coef is:')
         print(self.coef)
