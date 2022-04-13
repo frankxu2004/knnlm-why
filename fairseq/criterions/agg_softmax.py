@@ -23,7 +23,7 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
             print('Using one hot cluster distribution with K=', args.pseudo_vocab_ratio)
             # one-hot coef
             self.coef = self.initialize_projection_matrix(task.target_dictionary, args.pseudo_vocab_ratio)
-            self.coef = self.coef.bool().to_dense()  # save memory using bool for one hot
+            self.coef = self.coef.to_dense().bool()  # save memory using bool for one hot
             if torch.cuda.is_available() and not args.cpu:
                 self.coef = self.coef.cuda()
         if args.load_centroid_distribution:
@@ -61,7 +61,7 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
                     indexes.append((i, j))
                     values.append(1.)
         return torch.sparse_coo_tensor(list(zip(*indexes)), values,
-                                       (vocab_size, num_out_emb_entries)).coalesce()
+                                       (vocab_size, num_out_emb_entries), dtype=torch.int8).coalesce()
 
     def compute_loss(self, model, net_output, sample, reduce=True):
         target = model.get_targets(sample, net_output).view(-1)
