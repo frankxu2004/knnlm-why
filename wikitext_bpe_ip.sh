@@ -8,7 +8,7 @@ python build_dstore.py \
     --num_keys_to_add_at_a_time 500000 \
     --starting_point 0 --dstore-fp16 --dimension 1024 --metric ip
 
-
+# no recompute
 python eval_lm.py data-bin/wikitext103-bpe \
     --path checkpoints/wikitext103-bpe/checkpoint_best.pt \
     --sample-break-mode complete --max-tokens 3072 \
@@ -20,6 +20,7 @@ python eval_lm.py data-bin/wikitext103-bpe \
     --no-load-keys \
     --probe 32 --knnlm --fp16 --dstore-fp16 --bpe subword_nmt --remove-bpe
 
+# recompute
 python eval_lm.py data-bin/wikitext103-bpe \
     --path checkpoints/wikitext103-bpe/checkpoint_best.pt \
     --sample-break-mode complete --max-tokens 3072 \

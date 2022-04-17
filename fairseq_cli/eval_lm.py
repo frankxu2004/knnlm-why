@@ -306,8 +306,8 @@ def main(parsed_args):
     if parsed_args.save_scores:
         np.save(parsed_args.save_scores, np.concatenate(all_scores))
 
-    # if all_knn_scores:
-    #     np.save('best_knn_only_scores.npy', np.concatenate(all_knn_scores))
+    if all_knn_scores and parsed_args.save_knn_scores:
+        np.save(parsed_args.save_knn_scores, np.concatenate(all_knn_scores))
 
     if args.output_word_stats:
         for ws in sorted(word_stats.values(), key=lambda x: x.count, reverse=True):

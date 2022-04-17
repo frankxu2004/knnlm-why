@@ -29,7 +29,7 @@ class SequenceScorer(object):
             # one-hot coef
             self.coef = AggSoftmaxCriterion.initialize_projection_matrix(tgt_dict, args.pseudo_vocab_ratio)
             if torch.cuda.is_available() and not args.cpu:
-                self.coef = self.coef.cuda()
+                self.coef = self.coef.float().cuda()
         if args.load_centroid_distribution:
             # load prior coef
             from scipy import sparse

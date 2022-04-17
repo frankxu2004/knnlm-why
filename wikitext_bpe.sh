@@ -147,7 +147,7 @@ python eval_lm.py data-bin/wikitext103-bpe \
     --k 1024 --lmbda 0.25 --dstore-size 153225485 --knn-keytype last_ffn_input \
     --probe 32 --knnlm --fp16 --dstore-fp16 --bpe subword_nmt --remove-bpe
 
-## all knn only
+## lambda 0.99 nearly knn only
 python eval_lm.py data-bin/wikitext103-bpe \
     --path checkpoints/wikitext103-bpe/checkpoint_best.pt \
     --sample-break-mode complete --max-tokens 3072 \

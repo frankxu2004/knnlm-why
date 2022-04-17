@@ -33,14 +33,21 @@ for i in range(tgt_len - 1):
 count = len(tokens) - skipped_toks
 
 knn_helping = 0
-with open('variants_interpolation.txt', 'w') as outfile:
+with open('new_variants_interpolation.txt', 'w') as outfile:
     for f in ['best_knn_only_scores.npy',
-              'seed3_scores.npy',
-              'kv_scores/2v_scores.npy',
+              'kv1_finetune_scores.npy',
               'kv2_finetune_scores.npy',
-              'kv_scores/3v_scores.npy',
-              'additional_linear_scores/add_linear_scores.npy',
-              'additional_linear_scores/additional_softmax_scores_best.npy']:
+              'kv3_finetune_scores.npy',
+              'kv4_finetune_scores.npy',
+              'kv5_finetune_scores.npy',
+              'kv6_finetune_scores.npy',
+              'kv7_finetune_scores.npy',
+              'kv8_finetune_scores.npy',
+              'kv9_finetune_scores.npy',
+              'ip_recomp_knn_scores.npy',
+              'recomp_knn_scores.npy',
+              'ip_knn_scores.npy',
+              ]:
         overfit_scores = np.load(f)
         overfit_scores = torch.from_numpy(overfit_scores).cuda()
         combine_probs = torch.stack([lm_scores, overfit_scores], dim=0)
@@ -49,7 +56,7 @@ with open('variants_interpolation.txt', 'w') as outfile:
 
         oracle_ppl = torch.exp(-oracle_scores.sum() / count)
 
-        if 'knn' in f:
+        if 'best_knn_only_scores' in f:
             knn_helping = argmaxs
 
         match_knn = torch.sum(argmaxs == knn_helping).item() / len(tokens)
@@ -60,7 +67,7 @@ with open('variants_interpolation.txt', 'w') as outfile:
 
         knn_helping_ppl = torch.exp(knn_helping_scores / count)
 
-        extra_only_ppl = torch.exp(- overfit_scores.sum() / count)
+        extra_only_ppl = torch.exp(-overfit_scores.sum() / count)
 
         best_ppl = 1e10
         best_lmbda = 0
