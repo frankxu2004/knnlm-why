@@ -19,6 +19,8 @@ parser.add_argument('--metric', type=str, default='l2', help='distance metric of
 parser.add_argument('--num_keys_to_add_at_a_time', default=1000000, type=int,
                     help='can only load a certain amount of data to memory at a time.')
 parser.add_argument('--starting_point', type=int, help='index to start adding keys at')
+parser.add_argument('--ending_point', type=int, help='index to end adding keys at')
+
 args = parser.parse_args()
 
 print(args)
@@ -54,9 +56,10 @@ if not os.path.exists(args.faiss_index+".trained"):
 print('Adding Keys')
 index = faiss.read_index(args.faiss_index+".trained")
 start = args.starting_point
+dstore_end = min(args.dstore_size, args.ending_point)
 start_time = time.time()
-while start < args.dstore_size:
-    end = min(args.dstore_size, start+args.num_keys_to_add_at_a_time)
+while start < dstore_end:
+    end = min(dstore_end, start+args.num_keys_to_add_at_a_time)
     to_add = keys[start:end].copy()
     index.add_with_ids(to_add.astype(np.float32), np.arange(start, end))
     start += args.num_keys_to_add_at_a_time
@@ -69,6 +72,6 @@ while start < args.dstore_size:
 print("Adding total %d keys" % start)
 print('Adding took {} s'.format(time.time() - start_time))
 print('Writing Index')
-start = time.time()
+start_time = time.time()
 faiss.write_index(index, args.faiss_index)
-print('Writing index took {} s'.format(time.time()-start))
+print('Writing index took {} s'.format(time.time()-start_time))
