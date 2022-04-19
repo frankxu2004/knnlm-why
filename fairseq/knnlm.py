@@ -6,17 +6,18 @@ from fairseq import utils
 import time
 from fairseq.data import Dictionary
 
+
 class KNN_Dstore(object):
     def __init__(self, args):
         self.half = args.fp16
         self.dimension = args.decoder_embed_dim
         self.k = args.k
+        self.ignore_top = args.ignore_top
         self.dstore_size = args.dstore_size
         self.metric_type = args.faiss_metric_type
         self.sim_func = args.knn_sim_func
         self.dstore_fp16 = args.dstore_fp16
         self.index = self.setup_faiss(args)
-
 
     def setup_faiss(self, args):
         if not args.dstore_filename:
@@ -27,16 +28,43 @@ class KNN_Dstore(object):
         print('Reading datastore took {} s'.format(time.time() - start))
         index.nprobe = args.probe
 
+        if args.knnlm_gpu:
+            def my_index_cpu_to_gpu_multiple(resources, index, co=None, gpu_nos=None):
+                vres = faiss.GpuResourcesVector()
+                vdev = faiss.IntVector()
+                if gpu_nos is None:
+                    gpu_nos = range(len(resources))
+                for i, res in zip(gpu_nos, resources):
+                    vdev.push_back(i)
+                    vres.push_back(res)
+                index = faiss.index_cpu_to_gpu_multiple(vres, vdev, index, co)
+                index.referenced_objects = resources
+                return index
+
+            start = time.time()
+
+            resources = [faiss.StandardGpuResources() for i in range(faiss.get_num_gpus())]
+            co = faiss.GpuMultipleClonerOptions()
+            co.useFloat16 = True
+            co.shard = True
+            index = my_index_cpu_to_gpu_multiple(resources, index, co=co)
+            # index = faiss.index_cpu_to_gpu(faiss.StandardGpuResources(), 0, index, co)
+            print('Moving index to GPU took {} s'.format(time.time() - start))
+
         if args.dstore_fp16:
             print('Keys are fp16 and vals are int64')
             if not args.no_load_keys:
-                self.keys = np.memmap(args.dstore_filename+'_keys.npy', dtype=np.float16, mode='r', shape=(self.dstore_size, self.dimension))
-            self.vals = np.memmap(args.dstore_filename+'_vals.npy', dtype=np.int64, mode='r', shape=(self.dstore_size, 1))
+                self.keys = np.memmap(args.dstore_filename + '_keys.npy', dtype=np.float16, mode='r',
+                                      shape=(self.dstore_size, self.dimension))
+            self.vals = np.memmap(args.dstore_filename + '_vals.npy', dtype=np.int64, mode='r',
+                                  shape=(self.dstore_size, 1))
         else:
             print('Keys are fp32 and vals are int64')
             if not args.no_load_keys:
-                self.keys = np.memmap(args.dstore_filename+'_keys.npy', dtype=np.float32, mode='r', shape=(self.dstore_size, self.dimension))
-            self.vals = np.memmap(args.dstore_filename+'_vals.npy', dtype=np.int64, mode='r', shape=(self.dstore_size, 1))
+                self.keys = np.memmap(args.dstore_filename + '_keys.npy', dtype=np.float32, mode='r',
+                                      shape=(self.dstore_size, self.dimension))
+            self.vals = np.memmap(args.dstore_filename + '_vals.npy', dtype=np.int64, mode='r',
+                                  shape=(self.dstore_size, 1))
 
         # If you wish to load all the keys into memory
         # CAUTION: Only do this if your RAM can handle it!
@@ -46,15 +74,17 @@ class KNN_Dstore(object):
 
             if not args.no_load_keys:
                 del self.keys
-                self.keys_from_memmap = np.memmap(args.dstore_filename+'_keys.npy',
+                self.keys_from_memmap = np.memmap(args.dstore_filename + '_keys.npy',
                                                   dtype=np.float16 if args.dstore_fp16 else np.float32, mode='r',
                                                   shape=(self.dstore_size, self.dimension))
-                self.keys = np.zeros((self.dstore_size, self.dimension), dtype=np.float16 if args.dstore_fp16 else np.float32)
+                self.keys = np.zeros((self.dstore_size, self.dimension),
+                                     dtype=np.float16 if args.dstore_fp16 else np.float32)
                 self.keys = self.keys_from_memmap[:]
                 self.keys = self.keys.astype(np.float16 if args.dstore_fp16 else np.float32)
 
             del self.vals
-            self.vals_from_memmap = np.memmap(args.dstore_filename+'_vals.npy', dtype=np.int64, mode='r', shape=(self.dstore_size, 1))
+            self.vals_from_memmap = np.memmap(args.dstore_filename + '_vals.npy', dtype=np.int64, mode='r',
+                                              shape=(self.dstore_size, 1))
             self.vals = np.zeros((self.dstore_size, 1), dtype=np.int64)
             self.vals = self.vals_from_memmap[:]
             self.vals = self.vals.astype(np.int64)
@@ -62,12 +92,14 @@ class KNN_Dstore(object):
 
         return index
 
-
     def get_knns(self, queries):
-        start = time.time()
-        dists, knns = self.index.search(queries.detach().cpu().float().numpy(), self.k)
+        if self.ignore_top:
+            dists, knns = self.index.search(queries.detach().cpu().float().numpy(), self.k + 1)
+            dists = dists[:, 1:]
+            knns = knns[:, 1:]
+        else:
+            dists, knns = self.index.search(queries.detach().cpu().float().numpy(), self.k)
         return dists, knns
-
 
     def get_knn_log_prob(self, queries, tgt, pad_idx):
         def dist_func(d, k, q, function=None):
@@ -81,7 +113,7 @@ class KNN_Dstore(object):
                     if self.half:
                         knns_vecs = knns_vecs.half()
                     query_vecs = q.view(qsize[0], 1, qsize[1]).repeat(1, self.k, 1)
-                    l2 = torch.sum((query_vecs - knns_vecs.detach())**2, dim=2)
+                    l2 = torch.sum((query_vecs - knns_vecs.detach()) ** 2, dim=2)
                     return -1 * l2
                 return d
 
@@ -106,15 +138,15 @@ class KNN_Dstore(object):
         dists = dist_func(dists, knns, queries[tgt != pad_idx, :], function=self.sim_func)
         probs = utils.log_softmax(dists, dim=-1)
 
-        index_mask = torch.eq(torch.from_numpy(self.vals[knns]).long().cuda().squeeze(-1), tgt[tgt != pad_idx].unsqueeze(-1)).float()
-        index_mask[index_mask == 0] = -10000 # for stability
+        index_mask = torch.eq(torch.from_numpy(self.vals[knns]).long().cuda().squeeze(-1),
+                              tgt[tgt != pad_idx].unsqueeze(-1)).float()
+        index_mask[index_mask == 0] = -10000  # for stability
         index_mask[index_mask == 1] = 0
 
         # (T_reducedxB)
         yhat_knn_prob = torch.logsumexp(probs + index_mask, dim=-1).clone()
-        full_yhat_knn_prob = torch.full([qshape[0]*qshape[1]], -10000.).cuda()
+        full_yhat_knn_prob = torch.full([qshape[0] * qshape[1]], -10000.).cuda()
         full_yhat_knn_prob[tgt != pad_idx] = yhat_knn_prob
 
         # TxBx1
         return full_yhat_knn_prob.view(qshape[0], qshape[1], 1)
-

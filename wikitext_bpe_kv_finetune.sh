@@ -138,6 +138,18 @@ python train.py --task language_modeling \
   --max-tokens 3072 --update-freq 3 --tokens-per-sample 3072 --seed 1 \
   --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16
 
+# k=9, 1/10 lr schedule as training?
+python train.py --task language_modeling \
+    data-bin/wikitext103-bpe \
+  --save-dir checkpoints/wikitext103-bpe-kv9-fix \
+  --arch transformer_lm_wikibpe  --restore-file checkpoints/wikitext103-bpe/checkpoint_best.pt \
+  --reset-optimizer --reset-dataloader --reset-meters \
+  --finetune-out-embed --pseudo-vocab-ratio 9 --criterion agg_softmax \
+  --max-update 286000 --max-lr 0.1 --t-mult 2 --lr-period-updates 270000 --lr-scheduler cosine --lr-shrink 0.75 \
+  --warmup-updates 16000 --warmup-init-lr 1e-08 --min-lr 1e-10 --optimizer nag --lr 0.00001 --clip-norm 0.1 \
+  --max-tokens 3072 --update-freq 3 --tokens-per-sample 3072 --seed 1 \
+  --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16
+
 ## eval
 python eval_lm.py data-bin/wikitext103-bpe \
     --path checkpoints/wikitext103-bpe-kv9-fix/checkpoint_best.pt \

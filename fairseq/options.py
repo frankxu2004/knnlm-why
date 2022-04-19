@@ -506,6 +506,8 @@ def add_eval_lm_args(parser):
     group.add_argument('--dstore-mmap', default=None, type=str,
                        help='If saving knnlm dstore, save keys and values to this file')
     # args for KNN-Distill
+    parser.add_argument('--knnlm-gpu', action='store_true', default=None,
+                        help='Use GPU faiss')
     parser.add_argument('--pseudo-vocab-ratio', type=int, default=1,
                         help='k|V| output embedding matrix')
     parser.add_argument('--use-last-ffn-input', action='store_true',

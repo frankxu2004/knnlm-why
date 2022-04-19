@@ -96,6 +96,8 @@ class LanguageModelingTask(FairseqTask):
                             help='for FAISS, the number of lists to query')
         parser.add_argument('--k', default=1024, type=int,
                             help='number of nearest neighbors to retrieve')
+        parser.add_argument('--ignore-top', action='store_true', default=False,
+                            help='whether to ignore the top 1 from knn retrieval')
         parser.add_argument('--dstore-size', default=103227021, type=int,
                             help='number of items in the knnlm datastore')
         parser.add_argument('--dstore-filename', type=str, default=None,
