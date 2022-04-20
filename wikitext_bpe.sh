@@ -53,14 +53,6 @@ python eval_lm.py data-bin/wikitext103-bpe \
     --context-window 1536 --tokens-per-sample 1536 \
     --fp16 --save-tokens train_tokens.npy --save-scores train_scores.npy
 
-## eval train with KNN?
-python eval_lm.py data-bin/wikitext103-bpe \
-    --path checkpoints/wikitext103-bpe/checkpoint_best.pt \
-    --sample-break-mode none --max-tokens 3072 \
-    --softmax-batch 1024 --gen-subset train \
-    --context-window 1536 --tokens-per-sample 1536 \
-    --fp16 --save-tokens train_tokens.npy --save-scores train_scores.npy
-
 ## eval seed3
 python eval_lm.py data-bin/wikitext103-bpe \
     --path checkpoints/wikitext103-bpe-seed3/checkpoint_best.pt \
@@ -137,6 +129,20 @@ python build_dstore.py \
     --faiss_index checkpoints/wikitext103-bpe/knn.index \
     --num_keys_to_add_at_a_time 500000 \
     --starting_point 0 --dstore-fp16 --dimension 1024
+
+## eval train with KNN?
+python eval_lm.py data-bin/wikitext103-bpe \
+    --path checkpoints/wikitext103-bpe/checkpoint_best.pt \
+    --sample-break-mode none --max-tokens 3072 \
+    --softmax-batch 1024 --gen-subset train \
+    --context-window 1536 --tokens-per-sample 1536 \
+    --dstore-filename checkpoints/wikitext103-bpe/dstore \
+    --indexfile checkpoints/wikitext103-bpe/knn_prune.index  \
+    --model-overrides "{'knn_keytype': 'last_ffn_input'}" \
+    --k 1024 --lmbda 0.25 --dstore-size 153225485 --knn-keytype last_ffn_input \
+    --knn-sim-func "do_not_recomp_l2" --no-load-keys \
+    --probe 32 --knnlm --fp16 --dstore-fp16 --bpe subword_nmt --remove-bpe \
+    --save-knn-scores train_knn_scores.npy --knnlm-gpu --ignore-top
 
 # eval with index
 # no recompute
