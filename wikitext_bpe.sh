@@ -45,6 +45,22 @@ python eval_lm.py data-bin/wikitext103-bpe \
     --context-window 2560 --softmax-batch 1024 \
     --gen-subset valid --bpe subword_nmt --remove-bpe
 
+## eval train
+python eval_lm.py data-bin/wikitext103-bpe \
+    --path checkpoints/wikitext103-bpe/checkpoint_best.pt \
+    --sample-break-mode none --max-tokens 3072 \
+    --softmax-batch 1024 --gen-subset train \
+    --context-window 1536 --tokens-per-sample 1536 \
+    --fp16 --save-tokens train_tokens.npy --save-scores train_scores.npy
+
+## eval train with KNN?
+python eval_lm.py data-bin/wikitext103-bpe \
+    --path checkpoints/wikitext103-bpe/checkpoint_best.pt \
+    --sample-break-mode none --max-tokens 3072 \
+    --softmax-batch 1024 --gen-subset train \
+    --context-window 1536 --tokens-per-sample 1536 \
+    --fp16 --save-tokens train_tokens.npy --save-scores train_scores.npy
+
 ## eval seed3
 python eval_lm.py data-bin/wikitext103-bpe \
     --path checkpoints/wikitext103-bpe-seed3/checkpoint_best.pt \

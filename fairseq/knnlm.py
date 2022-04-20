@@ -44,9 +44,8 @@ class KNN_Dstore(object):
             start = time.time()
 
             resources = [faiss.StandardGpuResources() for i in range(faiss.get_num_gpus())]
-            co = faiss.GpuMultipleClonerOptions()
+            co = faiss.GpuClonerOptions()
             co.useFloat16 = True
-            co.shard = True
             index = my_index_cpu_to_gpu_multiple(resources, index, co=co)
             # index = faiss.index_cpu_to_gpu(faiss.StandardGpuResources(), 0, index, co)
             print('Moving index to GPU took {} s'.format(time.time() - start))

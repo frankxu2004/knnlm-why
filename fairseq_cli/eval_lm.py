@@ -301,11 +301,11 @@ def main(parsed_args):
         avg_nll_loss, 2**avg_nll_loss
     ))
 
-    # np.save('knnlm_tokens.npy', np.concatenate(all_token_ids))
-    # np.save('overfit_scores/overfit_lm_scores_' + parsed_args.path.split('/')[-1].split('.')[0] + '.npy', np.concatenate(all_scores))
+    # saving
+    if parsed_args.save_tokens:
+        np.save(parsed_args.save_tokens, np.concatenate(all_token_ids))
     if parsed_args.save_scores:
         np.save(parsed_args.save_scores, np.concatenate(all_scores))
-
     if all_knn_scores and parsed_args.save_knn_scores:
         np.save(parsed_args.save_knn_scores, np.concatenate(all_knn_scores))
 

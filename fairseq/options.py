@@ -520,6 +520,8 @@ def add_eval_lm_args(parser):
                         help='centroids scaling')
     parser.add_argument('--save-scores', type=str, default='',
                         help='scores npy file path to save')
+    parser.add_argument('--save-tokens', type=str, default='',
+                        help='tokens npy file path to save')
     parser.add_argument('--save-knn-scores', type=str, default='',
                         help='knn scores npy file path to save')
 

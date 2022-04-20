@@ -1,13 +1,13 @@
 # continue training till overfit, turns off dropout
-CUDA_VISIBLE_DEVICES=0,1,2,3,8,9 python train.py --task language_modeling \
+python train.py --task language_modeling \
     data-bin/wikitext103-bpe \
   --save-dir checkpoints/wikitext103-bpe-overfit \
   --arch transformer_lm_wikibpe \
   --dropout 0 --attention-dropout 0 --activation-dropout 0 \
   --restore-file checkpoints/wikitext103-bpe/checkpoint_best.pt \
   --reset-optimizer --reset-dataloader --reset-meters \
-  --max-update 28600 --optimizer nag --lr 1e-2 --clip-norm 100 \
-  --max-tokens 3072 --update-freq 4 --tokens-per-sample 3072 --seed 1 \
+  --max-update 286000 --optimizer nag --lr 1e-2 --clip-norm 100 \
+  --max-tokens 3072 --update-freq 3 --tokens-per-sample 3072 --seed 1 \
   --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16 | tee overfit.log
 
 # continue training Google Cloud 4 GPUs
