@@ -10,23 +10,27 @@ python train.py --task language_modeling \
   --max-tokens 3072 --update-freq 3 --tokens-per-sample 3072 --seed 1 \
   --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16 | tee overfit.log
 
-# continue training Google Cloud 4 GPUs
-python train.py --task language_modeling \
-    data-bin/wikitext103-bpe \
-  --save-dir checkpoints/wikitext103-bpe-overfit \
-  --arch transformer_lm_wikibpe \
-  --dropout 0 --attention-dropout 0 --activation-dropout 0 \
-  --restore-file checkpoints/wikitext103-bpe-overfit/checkpoint_last.pt \
-  --max-update 28600 --optimizer nag --lr 1e-2 --clip-norm 100 \
-  --max-tokens 3072 --update-freq 6 --tokens-per-sample 3072 --seed 1 \
-  --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16 | tee overfit.log
+# eval overfit train scores
+python eval_lm.py data-bin/wikitext103-bpe \
+    --path checkpoints/wikitext103-bpe-overfit-new/checkpoint95.pt \
+    --sample-break-mode none --max-tokens 3072 \
+    --softmax-batch 1024 --gen-subset train \
+    --context-window 1536 --tokens-per-sample 1536 \
+    --fp16 --save-scores overfit_train_scores.npy
+
+# eval overfit on valid
+python eval_lm.py data-bin/wikitext103-bpe \
+    --path checkpoints/wikitext103-bpe-overfit-new/checkpoint95.pt \
+    --sample-break-mode complete --max-tokens 3072 \
+    --context-window 2560 --softmax-batch 1024 \
+    --gen-subset valid --bpe subword_nmt --remove-bpe --save-scores overfit_valid_scores.npy
+
 
 python eval_lm.py data-bin/wikitext103-bpe \
     --path checkpoints/wikitext103-bpe-overfit/checkpoint2.pt \
     --sample-break-mode complete --max-tokens 3072 \
     --context-window 2560 --softmax-batch 1024 \
     --gen-subset valid --bpe subword_nmt --remove-bpe
-
 
 # store continue training overfit
 python eval_lm.py data-bin/wikitext103-bpe \

@@ -44,13 +44,20 @@ with open('new_variants_interpolation.txt', 'w') as outfile:
               'kv7_finetune_scores.npy',
               'kv8_finetune_scores.npy',
               'kv9_finetune_scores.npy',
+              'kv9_lr_finetune_scores.npy',
               'ip_recomp_knn_scores.npy',
               'recomp_knn_scores.npy',
               'ip_knn_scores.npy',
+              'overfit_valid_scores.npy',
+              'overfit129_valid_scores.npy',
+              'last_linear_ip_scores.npy',
+              'last_linear_ip_recomp_scores.npy',
+              'last_linear_scores.npy',
+              'last_linear_recomp_scores.npy'
               ]:
-        overfit_scores = np.load(f)
-        overfit_scores = torch.from_numpy(overfit_scores).cuda()
-        combine_probs = torch.stack([lm_scores, overfit_scores], dim=0)
+        extra_scores = np.load(f)
+        extra_scores = torch.from_numpy(extra_scores).cuda()
+        combine_probs = torch.stack([lm_scores, extra_scores], dim=0)
 
         oracle_scores, argmaxs = torch.max(combine_probs, dim=0)
 
@@ -67,7 +74,7 @@ with open('new_variants_interpolation.txt', 'w') as outfile:
 
         knn_helping_ppl = torch.exp(knn_helping_scores / count)
 
-        extra_only_ppl = torch.exp(-overfit_scores.sum() / count)
+        extra_only_ppl = torch.exp(-extra_scores.sum() / count)
 
         best_ppl = 1e10
         best_lmbda = 0

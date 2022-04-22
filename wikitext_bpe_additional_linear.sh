@@ -55,3 +55,17 @@ CUDA_VISIBLE_DEVICES=1,2,4,5,6,7 python train.py --task language_modeling \
   --max-update 286000 --optimizer nag --lr 1e-2 --clip-norm 100 \
   --max-tokens 12288 --update-freq 1 --tokens-per-sample 3072 --seed 1 \
   --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16
+
+
+## ATT K=9
+python train.py --task language_modeling \
+    data-bin/wikitext103-bpe \
+  --save-dir checkpoints/wikitext103-bpe-kv9-att-fix \
+  --arch transformer_lm_wikibpe \
+  --restore-file checkpoints/wikitext103-bpe/checkpoint_best.pt \
+  --reset-optimizer --reset-dataloader --reset-meters \
+  --knn-keytype last_ffn_input --use-last-ffn-input --finetune-out-embed \
+  --pseudo-vocab-ratio 9 --criterion agg_softmax \
+  --max-update 286000 --optimizer nag --lr 5e-2 --clip-norm 100 \
+  --max-tokens 3072 --update-freq 3 --tokens-per-sample 3072 --seed 1 \
+  --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16

@@ -138,6 +138,13 @@ python train.py --task language_modeling \
   --max-tokens 3072 --update-freq 3 --tokens-per-sample 3072 --seed 1 \
   --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16
 
+## eval
+python eval_lm.py data-bin/wikitext103-bpe \
+    --path checkpoints/wikitext103-bpe-kv9-fix/checkpoint_best.pt \
+    --sample-break-mode complete --max-tokens 3072 \
+    --context-window 2560 --softmax-batch 1024 --pseudo-vocab-ratio 9 \
+    --gen-subset valid --bpe subword_nmt --remove-bpe
+
 # k=9, 1/10 lr schedule as training?
 python train.py --task language_modeling \
     data-bin/wikitext103-bpe \
@@ -152,10 +159,10 @@ python train.py --task language_modeling \
 
 ## eval
 python eval_lm.py data-bin/wikitext103-bpe \
-    --path checkpoints/wikitext103-bpe-kv9-fix/checkpoint_best.pt \
+    --path checkpoints/wikitext103-bpe-kv9-lr-fix/checkpoint_best.pt \
     --sample-break-mode complete --max-tokens 3072 \
     --context-window 2560 --softmax-batch 1024 --pseudo-vocab-ratio 9 \
-    --gen-subset valid --bpe subword_nmt --remove-bpe
+    --gen-subset valid --bpe subword_nmt --remove-bpe --save-scores kv9_lr_finetune_scores.npy
 
 
 # k=1

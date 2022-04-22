@@ -130,7 +130,7 @@ python build_dstore.py \
     --num_keys_to_add_at_a_time 500000 \
     --starting_point 0 --dstore-fp16 --dimension 1024
 
-## eval train with KNN?
+## eval train with KNN, ignore top 1?
 python eval_lm.py data-bin/wikitext103-bpe \
     --path checkpoints/wikitext103-bpe/checkpoint_best.pt \
     --sample-break-mode none --max-tokens 3072 \
@@ -142,7 +142,7 @@ python eval_lm.py data-bin/wikitext103-bpe \
     --k 1024 --lmbda 0.25 --dstore-size 153225485 --knn-keytype last_ffn_input \
     --knn-sim-func "do_not_recomp_l2" --no-load-keys \
     --probe 32 --knnlm --fp16 --dstore-fp16 --bpe subword_nmt --remove-bpe \
-    --save-knn-scores train_knn_scores.npy --knnlm-gpu --ignore-top
+    --knnlm-gpu --ignore-top --save-knn-scores train_knn_scores.npy
 
 # eval with index
 # no recompute
