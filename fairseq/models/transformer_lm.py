@@ -118,6 +118,8 @@ class TransformerLanguageModel(FairseqLanguageModel):
         # args for KNN-Distill
         parser.add_argument('--pseudo-vocab-ratio', type=int, default=1,
                             help='k|V| output embedding matrix')
+        parser.add_argument('--preserve-out-embed', default=False, action='store_true',
+                            help='load output embed from the checkpoint')
         parser.add_argument('--additional-linear', default=False, action='store_true',
                             help='add additional output embedding for last_ffn_input')
         parser.add_argument('--use-l2', action='store_true',
