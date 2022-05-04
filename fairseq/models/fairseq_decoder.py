@@ -2,9 +2,10 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
+import torch
 import torch.nn as nn
 from fairseq import utils
+import torch.nn.functional as F
 
 
 class FairseqDecoder(nn.Module):
@@ -63,6 +64,19 @@ class FairseqDecoder(nn.Module):
                 target = None
             out = self.adaptive_softmax.get_log_prob(net_output[0], target=target)
             return out.exp_() if not log_probs else out
+
+        elif hasattr(self, "k_mos") and self.k_mos > 1:
+            context_vector = net_output[0]
+            mixture_weights = utils.softmax(self.mixture_weights_linear(context_vector), dim=-1)
+            weighted_sum = None
+            for idx, linear_layer in enumerate(self.context_vector_projects):
+                softmax_distribution = utils.softmax(F.linear(linear_layer(context_vector), self.embed_out), dim=-1)
+                weighted = softmax_distribution * mixture_weights[:, :, idx:idx + 1]
+                if weighted_sum is None:
+                    weighted_sum = weighted
+                else:
+                    weighted_sum += weighted
+            return torch.log(torch.clamp(weighted_sum, min=1e-9)) if log_probs else weighted_sum
 
         logits = net_output[0]
         if log_probs:

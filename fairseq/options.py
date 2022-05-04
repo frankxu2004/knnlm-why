@@ -404,6 +404,8 @@ def add_optimization_args(parser):
     #KNN-distill finetune
     group.add_argument('--finetune-out-embed', default=False, action='store_true',
                        help='only finetune output embedding matrix')
+    group.add_argument('--finetune-mos', default=False, action='store_true',
+                       help='only finetune mixture of softmax')
     group.add_argument('--finetune-additional-linear', default=False, action='store_true',
                        help='only finetune additional linear embedding matrix')
     parser.add_argument('--load-centroids', type=str, default='',

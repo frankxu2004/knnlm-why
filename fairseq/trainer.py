@@ -180,6 +180,8 @@ class Trainer(object):
                 strict = True
                 if self.args.additional_linear:
                     strict = False
+                if self.args.k_mos > 1:
+                    strict = False
                 # remove pretrained output embedding if using kv options
                 if self.args.pseudo_vocab_ratio > 1 and not self.args.preserve_out_embed:
                     del state["model"]['decoder.embed_out']

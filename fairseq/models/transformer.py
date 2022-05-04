@@ -663,6 +663,14 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             self.additional_embed = nn.Parameter(torch.Tensor(len(dictionary), self.output_embed_dim))
             nn.init.normal_(self.additional_embed, mean=0, std=self.output_embed_dim ** -0.5)
 
+        # add MoS related parameters
+        self.k_mos = getattr(args, "k_mos", 1)
+        if self.k_mos > 1:
+            self.mixture_weights_linear = Linear(self.output_embed_dim, self.k_mos, bias=True)
+            self.context_vector_projects = nn.ModuleList([])
+            for i in range(self.k_mos):
+                self.context_vector_projects.append(Linear(self.output_embed_dim, self.output_embed_dim, bias=True))
+
         if args.decoder_normalize_before and not getattr(
             args, "no_decoder_final_norm", False
         ):
@@ -867,7 +875,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
     def output_layer(self, features):
         """Project features to the vocabulary size."""
-        if self.adaptive_softmax is None:
+        if self.adaptive_softmax is None and self.k_mos <= 1:
             if self.norm_l2:
                 # L2 normalize?
                 features = F.normalize(features, dim=-1)

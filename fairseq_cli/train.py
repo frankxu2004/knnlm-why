@@ -66,6 +66,13 @@ def main(args, init_distributed=False):
 
     logger.info(model)
 
+    # if only tune mixture of softmax
+    if args.finetune_mos:
+        print('Finetune only Mixture of softmax weights!')
+        for name, param in model.named_parameters():
+            if 'decoder.mixture_weights_linear' not in name and 'decoder.context_vector_projects' not in name:
+                param.requires_grad = False
+
     # if only tune output embedding
     if args.finetune_out_embed:
         print('Finetune only output embedding matrix!')
