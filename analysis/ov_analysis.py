@@ -18,8 +18,8 @@ bpe_toks = {
 
 bpe_len = len(bpe_cont)
 
-tokens = np.load('tokens.npy')
-lm_scores = np.load('scores.npy')
+tokens = np.load('overfit_analysis/tokens.npy')
+lm_scores = np.load('overfit_analysis/lm_scores.npy')
 
 assert len(tokens) == len(lm_scores)
 
@@ -33,34 +33,12 @@ for i in range(tgt_len - 1):
 count = len(tokens) - skipped_toks
 
 knn_helping = 0
-with open('new_variants_interpolation.txt', 'w') as outfile:
-    for f in ['best_knn_only_scores.npy',
-              'kv1_finetune_scores.npy',
-              'kv2_finetune_scores.npy',
-              'kv3_finetune_scores.npy',
-              'kv4_finetune_scores.npy',
-              'kv5_finetune_scores.npy',
-              'kv6_finetune_scores.npy',
-              'kv7_finetune_scores.npy',
-              'kv8_finetune_scores.npy',
-              'kv9_finetune_scores.npy',
-              'kv9_lr_finetune_scores.npy',
-              'ip_recomp_knn_scores.npy',
-              'recomp_knn_scores.npy',
-              'ip_knn_scores.npy',
-              'overfit_valid_scores.npy',
-              'overfit129_valid_scores.npy',
-              'last_linear_ip_scores.npy',
-              'last_linear_ip_recomp_scores.npy',
-              'last_linear_scores.npy',
-              'last_linear_recomp_scores.npy',
-              'kv1_att_finetune_scores.npy',
-              'kv2_att_finetune_scores.npy',
-              'kv3_att_finetune_scores.npy',
-              'kv4_att_finetune_scores.npy',
-              'kv5_att_finetune_scores.npy',
-              'kv6_att_finetune_scores.npy',
-              'kv9_att_finetune_scores.npy',
+with open('ov_interpolation.txt', 'w') as outfile:
+    for f in ['overfit_analysis/knn_scores.npy',
+              'overfit_analysis/knn_recomp_scores.npy',
+              'overfit_analysis/knn_ip_scores.npy',
+              'overfit_analysis/knn_ip_recomp_scores.npy',
+              'overfit_analysis/overfit129_lm_scores.npy',
               ]:
         extra_scores = np.load(f)
         extra_scores = torch.from_numpy(extra_scores).cuda()
@@ -70,7 +48,7 @@ with open('new_variants_interpolation.txt', 'w') as outfile:
 
         oracle_ppl = torch.exp(-oracle_scores.sum() / count)
 
-        if 'best_knn_only_scores' in f:
+        if 'knn_scores.npy' in f:
             knn_helping = argmaxs
 
         match_knn = torch.sum(argmaxs == knn_helping).item() / len(tokens)
