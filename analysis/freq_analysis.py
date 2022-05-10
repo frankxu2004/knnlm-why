@@ -4,8 +4,6 @@ import numpy as np
 
 vocab_size = 0
 
-log_base = 5
-
 frequencies = []
 with open('../train_scores.npy.txt') as loss_file:
     for line in loss_file:
