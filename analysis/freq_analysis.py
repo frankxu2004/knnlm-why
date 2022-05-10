@@ -1,5 +1,7 @@
 import math
 import json
+import numpy as np
+
 vocab_size = 0
 
 log_base = 5
@@ -26,14 +28,16 @@ def additional_embeddings(log_base):
 def total_embeddings(log_base):
     return vocab_size + sum(additional_embeddings(log_base))
 
-
-# for base in np.linspace(4.2, 4.5, 1000):
+# for base in np.linspace(13, 15, 100):
 #     print(base)
-#     print(total_embeddings(base) - 5 * vocab_size)
+#     print(total_embeddings(base) - 3 * vocab_size)
+#
+# exit()
+best_base = 13.98989898989899 # 3V
+# best_base = 4.242342342342343 # 5V
 
-best_base = 4.242342342342343
-print(total_embeddings(best_base)-5*vocab_size)
+print(total_embeddings(best_base)-3*vocab_size)
 
 # save number of additional embeddings
-json.dump(additional_embeddings(best_base), open('train_freq_num_extra_embed.json', 'w'))
+json.dump(additional_embeddings(best_base), open('train_freq_num_extra_embed_3v.json', 'w'))
 
