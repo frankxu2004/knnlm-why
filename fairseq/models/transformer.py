@@ -2,7 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
+import json
 import math
 from typing import Any, Dict, List, NamedTuple, Optional
 
@@ -588,6 +588,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         self.embed_dim = embed_dim
         self.output_embed_dim = args.decoder_output_dim
         self.pseudo_vocab_ratio = args.pseudo_vocab_ratio
+        self.num_extra_embed_file = args.num_extra_embed_file
 
         self.padding_idx = embed_tokens.padding_idx
         self.max_target_positions = args.max_target_positions
@@ -644,7 +645,12 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 tie_proj=args.tie_adaptive_proj,
             )
         elif not self.share_input_output_embed:
-            if self.pseudo_vocab_ratio == 1:
+            if self.num_extra_embed_file:
+                embedding_size = len(dictionary) + sum(json.load(open(self.num_extra_embed_file)))
+                self.embed_out = nn.Parameter(
+                    torch.Tensor(embedding_size, self.output_embed_dim)
+                )
+            elif self.pseudo_vocab_ratio == 1:
                 self.embed_out = nn.Parameter(
                     torch.Tensor(len(dictionary), self.output_embed_dim)
                 )

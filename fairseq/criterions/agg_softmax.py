@@ -5,6 +5,7 @@
 
 import numpy as np
 import torch
+import json
 
 from fairseq.criterions import register_criterion
 from fairseq.criterions.cross_entropy import CrossEntropyCriterion
@@ -17,9 +18,8 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
         super().__init__(args, task)
         self.num_special_tokens = task.target_dictionary.nspecial
         self.vocab_size = len(task.target_dictionary)
-        self.ratio = args.pseudo_vocab_ratio
         self.coef = None
-        if self.ratio > 1:
+        if args.pseudo_vocab_ratio > 1:
             print('Using one hot cluster distribution with K=', args.pseudo_vocab_ratio)
             # one-hot coef
             self.coef = self.initialize_projection_matrix(task.target_dictionary, args.pseudo_vocab_ratio)
@@ -38,28 +38,56 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
             if torch.cuda.is_available() and not args.cpu:
                 self.coef = self.coef.cuda()
 
+        if args.num_extra_embed_file:
+            print('Loading number of extra embeddings per word from file:', args.num_extra_embed_file)
+            self.coef = self.initialize_projection_matrix(task.target_dictionary, args.pseudo_vocab_ratio,
+                                                          num_extra_embed_file=args.num_extra_embed_file)
+            self.coef = self.coef.to_dense().bool()  # save memory using bool for one hot
+            if torch.cuda.is_available() and not args.cpu:
+                self.coef = self.coef.cuda()
+
         print('coef is:')
         print(self.coef)
+        print('coef shape:')
+        print(self.coef.shape)
 
     @staticmethod
-    def initialize_projection_matrix(dictionary, ratio):
-        num_special_tokens = dictionary.nspecial
+    def initialize_projection_matrix(dictionary, ratio, num_extra_embed_file=None):
         vocab_size = len(dictionary)
 
-        num_out_emb_entries = num_special_tokens + ratio * (
-                vocab_size - num_special_tokens)
-
-        indexes = []
-        values = []
-        for i in range(vocab_size):
-            if i < num_special_tokens:
+        if num_extra_embed_file:
+            num_extra_embeds = json.load(open(num_extra_embed_file))
+            assert len(num_extra_embeds) == vocab_size
+            num_out_emb_entries = vocab_size + sum(num_extra_embeds)
+            indexes = []
+            values = []
+            for i in range(vocab_size):
                 indexes.append((i, i))
                 values.append(1.)
-            else:
-                for j in range(num_special_tokens + ratio * (i - num_special_tokens),
-                               num_special_tokens + ratio * (i - num_special_tokens + 1)):
-                    indexes.append((i, j))
+            added_extra = 0
+            for i in range(vocab_size):
+                for j in range(num_extra_embeds[i]):
+                    indexes.append((i, vocab_size+added_extra))
                     values.append(1.)
+                    added_extra += 1
+
+        else:
+            num_special_tokens = dictionary.nspecial
+
+            num_out_emb_entries = num_special_tokens + ratio * (
+                    vocab_size - num_special_tokens)
+
+            indexes = []
+            values = []
+            for i in range(vocab_size):
+                if i < num_special_tokens:
+                    indexes.append((i, i))
+                    values.append(1.)
+                else:
+                    for j in range(num_special_tokens + ratio * (i - num_special_tokens),
+                                   num_special_tokens + ratio * (i - num_special_tokens + 1)):
+                        indexes.append((i, j))
+                        values.append(1.)
         return torch.sparse_coo_tensor(list(zip(*indexes)), values,
                                        (vocab_size, num_out_emb_entries), dtype=torch.int8).coalesce()
 
@@ -73,10 +101,4 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
             lprobs = torch.log(torch.clamp((self.coef[target] * lprobs).sum(-1), min=1e-9))  # bsz x vocab
         loss = - lprobs.sum()
 
-        # loss = F.nll_loss(
-        #     lprobs,
-        #     target,
-        #     ignore_index=self.padding_idx,
-        #     reduction='sum' if reduce else 'none',
-        # )
         return loss, loss

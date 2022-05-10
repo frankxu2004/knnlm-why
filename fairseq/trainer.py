@@ -182,6 +182,16 @@ class Trainer(object):
                     strict = False
                 if self.args.k_mos > 1:
                     strict = False
+                # when additional embeddings are specified, still initialize the first block of out embedding with
+                # pretrained
+                if self.args.num_extra_embed_file:
+                    if self.args.preserve_out_embed:
+                        orig_vocab_size = state["model"]['decoder.embed_out'].shape[0]
+                        with torch.no_grad():
+                            self.get_model().decoder.embed_out.data[:orig_vocab_size, :] = \
+                                state["model"]['decoder.embed_out']
+                    del state["model"]['decoder.embed_out']
+                    strict = False
                 # remove pretrained output embedding if using kv options
                 if self.args.pseudo_vocab_ratio > 1 and not self.args.preserve_out_embed:
                     del state["model"]['decoder.embed_out']
