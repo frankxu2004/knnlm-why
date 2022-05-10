@@ -18,7 +18,7 @@ python train.py --task language_modeling \
   --reset-optimizer --reset-dataloader --reset-meters \
   --finetune-out-embed --num-extra-embed-file analysis/train_freq_num_extra_embed_3v.json \
   --criterion agg_softmax --preserve-out-embed \
-  --max-update 286000 --optimizer nag --lr 5e-2 --clip-norm 100 \
+  --max-update 286000 --optimizer nag --lr 5e-3 --clip-norm 100 \
   --max-tokens 3072 --update-freq 3 --tokens-per-sample 3072 --seed 1 \
   --sample-break-mode none --skip-invalid-size-inputs-valid-test --ddp-backend=no_c10d --fp16
 
