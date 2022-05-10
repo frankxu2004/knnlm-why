@@ -1,5 +1,4 @@
 import math
-from tqdm import tqdm
 
 import numpy as np
 import torch
@@ -61,6 +60,15 @@ with open('new_variants_interpolation.txt', 'w') as outfile:
               'kv5_att_finetune_scores.npy',
               'kv6_att_finetune_scores.npy',
               'kv9_att_finetune_scores.npy',
+              'kv3_att_finetune_new_scores.npy',
+              'mos_scores/mos2_att_embed_finetune.npy',
+              'mos_scores/mos3_att_embed_finetune.npy',
+              'mos_scores/mos2_att_finetune.npy',
+              'mos_scores/mos3_att_finetune.npy',
+              'mos_scores/mos2_finetune.npy',
+              'mos_scores/mos3_finetune.npy',
+              'mos_scores/mos4_finetune.npy',
+              'mos_scores/mos5_finetune.npy',
               ]:
         extra_scores = np.load(f)
         extra_scores = torch.from_numpy(extra_scores).cuda()

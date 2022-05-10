@@ -12,7 +12,26 @@ python train.py --task language_modeling \
 
 ## eval
 python eval_lm.py data-bin/wikitext103-bpe \
-    --path checkpoints/wikitext103-bpe-kv2-fix/checkpoint_best.pt \
+    --path checkpoints/wikitext103-bpe-mos3-finetune/checkpoint_best.pt \
     --sample-break-mode complete --max-tokens 3072 \
-    --context-window 2560 --softmax-batch 1024 --pseudo-vocab-ratio 2 \
-    --gen-subset valid --bpe subword_nmt --remove-bpe
+    --context-window 2560 --softmax-batch 1024 --k-mos 3 \
+    --gen-subset valid --bpe subword_nmt --remove-bpe --save-scores mos_scores/mos3_finetune.npy
+
+
+python eval_lm.py data-bin/wikitext103-bpe \
+    --path checkpoints/wikitext103-bpe-mos2-finetune/checkpoint_best.pt \
+    --sample-break-mode complete --max-tokens 3072 \
+    --context-window 2560 --softmax-batch 1024 --k-mos 2 \
+    --gen-subset valid --bpe subword_nmt --remove-bpe --save-scores mos_scores/mos2_finetune.npy
+
+python eval_lm.py data-bin/wikitext103-bpe \
+    --path checkpoints/wikitext103-bpe-mos4-finetune/checkpoint_best.pt \
+    --sample-break-mode complete --max-tokens 3072 \
+    --context-window 2560 --softmax-batch 1024 --k-mos 4 \
+    --gen-subset valid --bpe subword_nmt --remove-bpe --save-scores mos_scores/mos4_finetune.npy
+
+python eval_lm.py data-bin/wikitext103-bpe \
+    --path checkpoints/wikitext103-bpe-mos5-finetune/checkpoint_best.pt \
+    --sample-break-mode complete --max-tokens 3072 \
+    --context-window 2560 --softmax-batch 1024 --k-mos 5 \
+    --gen-subset valid --bpe subword_nmt --remove-bpe --save-scores mos_scores/mos5_finetune.npy
