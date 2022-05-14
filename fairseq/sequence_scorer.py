@@ -41,8 +41,17 @@ class SequenceScorer(object):
                                                 freq_mat.shape).coalesce()
             if torch.cuda.is_available() and not args.cpu:
                 self.coef = self.coef.cuda()
+        if args.num_extra_embed_file:
+            print('Loading number of extra embeddings per word from file:', args.num_extra_embed_file)
+            self.coef = AggSoftmaxCriterion.initialize_projection_matrix(tgt_dict, args.pseudo_vocab_ratio,
+                                                                         num_extra_embed_file=args.num_extra_embed_file)
+            if torch.cuda.is_available() and not args.cpu:
+                self.coef = self.coef.float().cuda()
+
         print('coef is:')
         print(self.coef)
+        print('coef shape:')
+        print(self.coef.shape)
 
     @torch.no_grad()
     def generate(self, models, sample, **kwargs):
