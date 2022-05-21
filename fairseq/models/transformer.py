@@ -690,7 +690,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
         self.use_l2 = getattr(args, 'use_l2', False)
         self.norm_l2 = getattr(args, 'norm_l2', False)
-
+        self.interpolated_loss = getattr(args, "interpolated_loss", False)
 
     def forward(
         self,
@@ -726,10 +726,14 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             alignment_layer=alignment_layer,
             alignment_heads=alignment_heads,
         )
+        if self.interpolated_loss:
+            original_features = x
         if self.use_last_ffn_input:
             x = extra['last_ffn_input'].permute(1, 0, 2)
         elif self.additional_linear:
             x = (x, extra['last_ffn_input'].permute(1, 0, 2))
+        if self.interpolated_loss:
+            x = (x, original_features)
         if not features_only:
             x = self.output_layer(x)
         return x, extra
@@ -896,6 +900,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 return l2
             elif self.additional_linear:
                 return F.linear(features[0], self.embed_out) + F.linear(features[1], self.additional_embed)
+            elif self.interpolated_loss:
+                return F.linear(features[0], self.embed_out), F.linear(features[1], self.orig_embed)
             else:
                 return F.linear(features, self.embed_out)
         else:

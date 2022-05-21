@@ -6,6 +6,7 @@
 import numpy as np
 import torch
 import json
+import torch.nn.functional as F
 
 from fairseq.criterions import register_criterion
 from fairseq.criterions.cross_entropy import CrossEntropyCriterion
@@ -19,6 +20,7 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
         self.num_special_tokens = task.target_dictionary.nspecial
         self.vocab_size = len(task.target_dictionary)
         self.coef = None
+        self.args = args
         if args.pseudo_vocab_ratio > 1:
             print('Using one hot cluster distribution with K=', args.pseudo_vocab_ratio)
             # one-hot coef
@@ -48,8 +50,11 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
 
         print('coef is:')
         print(self.coef)
-        print('coef shape:')
-        print(self.coef.shape)
+        if self.coef:
+            print('coef shape:')
+            print(self.coef.shape)
+
+        self.lmbda = 0.5
 
     @staticmethod
     def initialize_projection_matrix(dictionary, ratio, num_extra_embed_file=None):
@@ -93,12 +98,37 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
 
     def compute_loss(self, model, net_output, sample, reduce=True):
         target = model.get_targets(sample, net_output).view(-1)
+        if self.args.interpolated_loss:
+            x, extra = net_output
+            assert len(x) == 2
+            net_output = x[0], extra
+            net_output_orig = x[1], extra
+            lprobs_orig = model.get_normalized_probs(net_output_orig, log_probs=True)
+            lprobs_orig = lprobs_orig.view(-1, lprobs_orig.size(-1))
+
         if self.coef is None:
             lprobs = model.get_normalized_probs(net_output, log_probs=True)
+            lprobs = lprobs.view(-1, lprobs.size(-1))
+
+            if self.args.interpolated_loss:
+                combine_probs = torch.stack([lprobs_orig, lprobs], dim=0)
+                coeffs = torch.ones_like(combine_probs)
+                coeffs[0] = np.log(1 - self.lmbda)
+                coeffs[1] = np.log(self.lmbda)
+                lprobs = torch.logsumexp(combine_probs + coeffs, dim=0)
+
+            loss = F.nll_loss(
+                lprobs,
+                target,
+                ignore_index=self.padding_idx,
+                reduction='sum' if reduce else 'none',
+            )
+
         else:
             lprobs = model.get_normalized_probs(net_output, log_probs=False)
-            lprobs = lprobs.view(-1, lprobs.size(-1))  # bsz x clusters
+            lprobs = lprobs.view(-1, lprobs.size(-1))  # bsz x nV
             lprobs = torch.log(torch.clamp((self.coef[target] * lprobs).sum(-1), min=1e-9))  # bsz x vocab
-        loss = - lprobs.sum()
+
+            loss = - lprobs.sum()
 
         return loss, loss

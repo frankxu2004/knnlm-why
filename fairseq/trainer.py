@@ -178,6 +178,11 @@ class Trainer(object):
             # load model parameters
             try:
                 strict = True
+
+                if self.args.interpolated_loss:
+                    orig_embed = state["model"]['decoder.embed_out']
+                    self.get_model().decoder.orig_embed = nn.Parameter(orig_embed, requires_grad=False).cuda()
+                    strict = False
                 if self.args.additional_linear:
                     strict = False
                 if self.args.k_mos > 1:

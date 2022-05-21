@@ -416,6 +416,8 @@ def add_optimization_args(parser):
                         help='if set, use last ffn input to multiply weight matrix')
     parser.add_argument('--init-out-embed', default=False,  action='store_true',
                         help='if set, re-initialize output embedding')
+    parser.add_argument('--interpolated-loss', default=False,  action='store_true',
+                        help='if set, train with the interpolated loss')
 
     # fmt: on
     return group
@@ -530,8 +532,6 @@ def add_eval_lm_args(parser):
                         help='tokens npy file path to save')
     parser.add_argument('--save-knn-scores', type=str, default='',
                         help='knn scores npy file path to save')
-
-
 
     # fmt: on
 

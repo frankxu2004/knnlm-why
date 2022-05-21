@@ -32,8 +32,8 @@ for i in range(tgt_len - 1):
 count = len(tokens) - skipped_toks
 
 knn_helping = 0
-with open('new_variants_interpolation.txt', 'w') as outfile:
-    for f in ['best_knn_only_scores.npy',
+
+extra_score_files = [
               # 'kv1_finetune_scores.npy',
               # 'kv2_finetune_scores.npy',
               # 'kv3_finetune_scores.npy',
@@ -79,7 +79,12 @@ with open('new_variants_interpolation.txt', 'w') as outfile:
               'epoch_scores/3v-att-init-finetune-epoch2.npy',
               'epoch_scores/3v-att-init-finetune-epoch3.npy',
               'epoch_scores/3v-att-init-finetune-epoch4.npy',
-              ]:
+    ]
+
+extra_score_files = [f'epoch_scores/3v-att-init-finetune-epoch{e}.npy' for e in range(1, 40)]
+
+with open('epochs_variants_interpolation.txt', 'w') as outfile:
+    for f in ['best_knn_only_scores.npy'] + extra_score_files:
         extra_scores = np.load(f)
         extra_scores = torch.from_numpy(extra_scores).cuda()
         combine_probs = torch.stack([lm_scores, extra_scores], dim=0)
