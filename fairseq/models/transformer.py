@@ -899,8 +899,10 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 l2 = 2 * dot_product - features_norms - embed_norms
                 return l2
             elif self.additional_linear:
+                assert len(features) == 2
                 return F.linear(features[0], self.embed_out) + F.linear(features[1], self.additional_embed)
             elif self.interpolated_loss:
+                assert len(features) == 2
                 return F.linear(features[0], self.embed_out), F.linear(features[1], self.orig_embed)
             else:
                 return F.linear(features, self.embed_out)

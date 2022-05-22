@@ -22,7 +22,7 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
         self.coef = None
         self.args = args
         if args.pseudo_vocab_ratio > 1:
-            print('Using one hot cluster distribution with K=', args.pseudo_vocab_ratio)
+            print('Using one hot cluster distribution with K =', args.pseudo_vocab_ratio)
             # one-hot coef
             self.coef = self.initialize_projection_matrix(task.target_dictionary, args.pseudo_vocab_ratio)
             self.coef = self.coef.to_dense().bool()  # save memory using bool for one hot
@@ -55,6 +55,8 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
             print(self.coef.shape)
 
         self.lmbda = 0.25
+
+        self.class_weights = torch.Tensor(json.load(open('analysis/train_knn_helped.json'))).cuda() + 1.
 
     @staticmethod
     def initialize_projection_matrix(dictionary, ratio, num_extra_embed_file=None):
@@ -120,6 +122,7 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
             loss = F.nll_loss(
                 lprobs,
                 target,
+                weight=self.class_weights,
                 ignore_index=self.padding_idx,
                 reduction='sum' if reduce else 'none',
             )

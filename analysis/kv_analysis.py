@@ -80,8 +80,9 @@ extra_score_files = [
     # 'epoch_scores/3v-att-init-finetune-epoch3.npy',
     # 'epoch_scores/3v-att-init-finetune-epoch4.npy',
     'interpolated_loss_scores/kv1_interpolated_scores.npy',
-    'interpolated_loss_scores/kv1_biglr_interpolated_scores.npy',
-    'interpolated_loss_scores/kv1_att_interpolated_scores.npy'
+    'interpolated_loss_scores/kv1_att_interpolated_scores.npy',
+    'interpolated_loss_scores/kv3_interpolated_scores.npy',
+    'interpolated_loss_scores/kv3_att_interpolated_scores.npy',
 ]
 
 # extra_score_files = [f'epoch_scores/3v-att-init-finetune-epoch{e}.npy' for e in range(1, 40)]
