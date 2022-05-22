@@ -50,7 +50,7 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
 
         print('coef is:')
         print(self.coef)
-        if self.coef:
+        if self.coef is not None:
             print('coef shape:')
             print(self.coef.shape)
 
@@ -128,6 +128,15 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
             lprobs = model.get_normalized_probs(net_output, log_probs=False)
             lprobs = lprobs.view(-1, lprobs.size(-1))  # bsz x nV
             lprobs = torch.log(torch.clamp((self.coef[target] * lprobs).sum(-1), min=1e-9))  # bsz x vocab
+
+            lprobs_orig = lprobs_orig[range(lprobs_orig.size(0)), target]
+
+            if self.args.interpolated_loss:
+                combine_probs = torch.stack([lprobs_orig, lprobs], dim=0)
+                coeffs = torch.ones_like(combine_probs)
+                coeffs[0] = np.log(1 - self.lmbda)
+                coeffs[1] = np.log(self.lmbda)
+                lprobs = torch.logsumexp(combine_probs + coeffs, dim=0)
 
             loss = - lprobs.sum()
 

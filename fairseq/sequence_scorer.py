@@ -50,7 +50,7 @@ class SequenceScorer(object):
 
         print('coef is:')
         print(self.coef)
-        if self.coef:
+        if self.coef is not None:
             print('coef shape:')
             print(self.coef.shape)
 
