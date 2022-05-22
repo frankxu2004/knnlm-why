@@ -54,7 +54,7 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
             print('coef shape:')
             print(self.coef.shape)
 
-        self.lmbda = 0.5
+        self.lmbda = 0.25
 
     @staticmethod
     def initialize_projection_matrix(dictionary, ratio, num_extra_embed_file=None):

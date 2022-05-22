@@ -34,56 +34,59 @@ count = len(tokens) - skipped_toks
 knn_helping = 0
 
 extra_score_files = [
-              # 'kv1_finetune_scores.npy',
-              # 'kv2_finetune_scores.npy',
-              # 'kv3_finetune_scores.npy',
-              # 'kv4_finetune_scores.npy',
-              # 'kv5_finetune_scores.npy',
-              # 'kv6_finetune_scores.npy',
-              # 'kv7_finetune_scores.npy',
-              # 'kv8_finetune_scores.npy',
-              # 'kv9_finetune_scores.npy',
-              # 'kv9_lr_finetune_scores.npy',
-              # 'ip_recomp_knn_scores.npy',
-              # 'recomp_knn_scores.npy',
-              # 'ip_knn_scores.npy',
-              # 'overfit_valid_scores.npy',
-              # 'overfit129_valid_scores.npy',
-              # 'last_linear_ip_scores.npy',
-              # 'last_linear_ip_recomp_scores.npy',
-              # 'last_linear_scores.npy',
-              # 'last_linear_recomp_scores.npy',
-              # 'kv1_att_finetune_scores.npy',
-              # 'kv2_att_finetune_scores.npy',
-              # 'kv3_att_finetune_scores.npy',
-              # 'kv4_att_finetune_scores.npy',
-              # 'kv5_att_finetune_scores.npy',
-              # 'kv6_att_finetune_scores.npy',
-              # 'kv9_att_finetune_scores.npy',
-              # 'kv3_att_finetune_new_scores.npy',
-              # 'mos_scores/mos2_att_embed_finetune.npy',
-              # 'mos_scores/mos3_att_embed_finetune.npy',
-              # 'mos_scores/mos2_att_finetune.npy',
-              # 'mos_scores/mos3_att_finetune.npy',
-              # 'mos_scores/mos2_finetune.npy',
-              # 'mos_scores/mos3_finetune.npy',
-              # 'mos_scores/mos4_finetune.npy',
-              # 'mos_scores/mos5_finetune.npy',
-              # 'extra_embed_scores/3v-init-finetune.npy',
-              # 'extra_embed_scores/3v-preserve-finetune.npy',
-              # 'extra_embed_scores/loss-3v-init-finetune.npy',
-              # 'extra_embed_scores/loss-3v-preserve-finetune.npy',
-              # 'extra_embed_scores/3v-att-init-finetune.npy',
-              # 'extra_embed_scores/loss-3v-att-init-finetune.npy',
-              'epoch_scores/3v-att-init-finetune-epoch1.npy',
-              'epoch_scores/3v-att-init-finetune-epoch2.npy',
-              'epoch_scores/3v-att-init-finetune-epoch3.npy',
-              'epoch_scores/3v-att-init-finetune-epoch4.npy',
-    ]
+    # 'kv1_finetune_scores.npy',
+    # 'kv2_finetune_scores.npy',
+    # 'kv3_finetune_scores.npy',
+    # 'kv4_finetune_scores.npy',
+    # 'kv5_finetune_scores.npy',
+    # 'kv6_finetune_scores.npy',
+    # 'kv7_finetune_scores.npy',
+    # 'kv8_finetune_scores.npy',
+    # 'kv9_finetune_scores.npy',
+    # 'kv9_lr_finetune_scores.npy',
+    # 'ip_recomp_knn_scores.npy',
+    # 'recomp_knn_scores.npy',
+    # 'ip_knn_scores.npy',
+    # 'overfit_valid_scores.npy',
+    # 'overfit129_valid_scores.npy',
+    # 'last_linear_ip_scores.npy',
+    # 'last_linear_ip_recomp_scores.npy',
+    # 'last_linear_scores.npy',
+    # 'last_linear_recomp_scores.npy',
+    # 'kv1_att_finetune_scores.npy',
+    # 'kv2_att_finetune_scores.npy',
+    # 'kv3_att_finetune_scores.npy',
+    # 'kv4_att_finetune_scores.npy',
+    # 'kv5_att_finetune_scores.npy',
+    # 'kv6_att_finetune_scores.npy',
+    # 'kv9_att_finetune_scores.npy',
+    # 'kv3_att_finetune_new_scores.npy',
+    # 'mos_scores/mos2_att_embed_finetune.npy',
+    # 'mos_scores/mos3_att_embed_finetune.npy',
+    # 'mos_scores/mos2_att_finetune.npy',
+    # 'mos_scores/mos3_att_finetune.npy',
+    # 'mos_scores/mos2_finetune.npy',
+    # 'mos_scores/mos3_finetune.npy',
+    # 'mos_scores/mos4_finetune.npy',
+    # 'mos_scores/mos5_finetune.npy',
+    # 'extra_embed_scores/3v-init-finetune.npy',
+    # 'extra_embed_scores/3v-preserve-finetune.npy',
+    # 'extra_embed_scores/loss-3v-init-finetune.npy',
+    # 'extra_embed_scores/loss-3v-preserve-finetune.npy',
+    # 'extra_embed_scores/3v-att-init-finetune.npy',
+    # 'extra_embed_scores/loss-3v-att-init-finetune.npy',
+    # 'epoch_scores/3v-att-init-finetune-epoch1.npy',
+    # 'epoch_scores/3v-att-init-finetune-epoch2.npy',
+    # 'epoch_scores/3v-att-init-finetune-epoch3.npy',
+    # 'epoch_scores/3v-att-init-finetune-epoch4.npy',
+    'interpolated_loss_scores/kv1_interpolated_scores.npy',
+    'interpolated_loss_scores/kv1_biglr_interpolated_scores.npy',
+    'interpolated_loss_scores/kv1_att_interpolated_scores.npy'
+]
 
-extra_score_files = [f'epoch_scores/3v-att-init-finetune-epoch{e}.npy' for e in range(1, 40)]
+# extra_score_files = [f'epoch_scores/3v-att-init-finetune-epoch{e}.npy' for e in range(1, 40)]
 
-with open('epochs_variants_interpolation.txt', 'w') as outfile:
+with open('interpolated_loss_interpolation.txt', 'w') as outfile:
     for f in ['best_knn_only_scores.npy'] + extra_score_files:
         extra_scores = np.load(f)
         extra_scores = torch.from_numpy(extra_scores).cuda()
@@ -108,7 +111,7 @@ with open('epochs_variants_interpolation.txt', 'w') as outfile:
 
         best_ppl = 1e10
         best_lmbda = 0
-        for lmbda in np.linspace(0.0, 0.999, num=200):
+        for lmbda in np.linspace(0.001, 0.999, num=200):
             coeffs = torch.ones_like(combine_probs)
             coeffs[0] = np.log(1 - lmbda)
             coeffs[1] = np.log(lmbda)

@@ -50,8 +50,9 @@ class SequenceScorer(object):
 
         print('coef is:')
         print(self.coef)
-        print('coef shape:')
-        print(self.coef.shape)
+        if self.coef:
+            print('coef shape:')
+            print(self.coef.shape)
 
     @torch.no_grad()
     def generate(self, models, sample, **kwargs):
