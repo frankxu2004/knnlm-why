@@ -727,7 +727,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             alignment_heads=alignment_heads,
         )
         if self.interpolated_loss:
-            original_features = x
+            original_features = x.detach()
         if self.use_last_ffn_input:
             x = extra['last_ffn_input'].permute(1, 0, 2)
         elif self.additional_linear:
@@ -903,7 +903,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 return F.linear(features[0], self.embed_out) + F.linear(features[1], self.additional_embed)
             elif self.interpolated_loss:
                 assert len(features) == 2
-                return F.linear(features[0], self.embed_out), F.linear(features[1], self.orig_embed)
+                return F.linear(features[0], self.embed_out), F.linear(features[1], self.orig_embed.detach())
             else:
                 return F.linear(features, self.embed_out)
         else:
