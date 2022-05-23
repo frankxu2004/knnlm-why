@@ -103,17 +103,16 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
     def compute_loss(self, model, net_output, sample, reduce=True):
         target = model.get_targets(sample, net_output).view(-1)
         if self.args.interpolated_loss:
-            x, extra = net_output
+            x, _ = net_output
             assert len(x) == 2
-            net_output = x[0], extra
-            net_output_orig = x[1], extra
+            net_output = x[0], None
+            net_output_orig = x[1], None
             lprobs_orig = model.get_normalized_probs(net_output_orig, log_probs=True)
             lprobs_orig = lprobs_orig.view(-1, lprobs_orig.size(-1))
 
         if self.coef is None:
             lprobs = model.get_normalized_probs(net_output, log_probs=True)
             lprobs = lprobs.view(-1, lprobs.size(-1))
-
             if self.args.interpolated_loss:
                 combine_probs = torch.stack([lprobs_orig, lprobs], dim=0)
                 coeffs = torch.ones_like(combine_probs)
