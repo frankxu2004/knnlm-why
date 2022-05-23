@@ -54,9 +54,11 @@ class AggSoftmaxCriterion(CrossEntropyCriterion):
             print('coef shape:')
             print(self.coef.shape)
 
-        self.lmbda = 0.25
+        self.lmbda = args.train_lambda
 
-        self.class_weights = torch.Tensor(json.load(open('analysis/train_knn_helped.json'))).cuda() + 1.
+        self.class_weights = None
+        if args.weighted_loss:
+            self.class_weights = torch.Tensor(json.load(open('analysis/train_knn_helped.json'))).cuda() + 1.
 
     @staticmethod
     def initialize_projection_matrix(dictionary, ratio, num_extra_embed_file=None):

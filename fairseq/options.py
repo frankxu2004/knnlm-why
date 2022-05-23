@@ -418,6 +418,10 @@ def add_optimization_args(parser):
                         help='if set, re-initialize output embedding')
     parser.add_argument('--interpolated-loss', default=False,  action='store_true',
                         help='if set, train with the interpolated loss')
+    parser.add_argument('--weighted-loss', default=False,  action='store_true',
+                        help='if set, train with the class-weighted loss')
+    parser.add_argument('--train-lambda', default=0.25, type=float,
+                        help='lambda in interpolated loss')
 
     # fmt: on
     return group
