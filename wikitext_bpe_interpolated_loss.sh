@@ -73,7 +73,8 @@ python train.py --task language_modeling \
 python eval_lm.py data-bin/wikitext103-bpe \
     --path checkpoints/wikitext103-bpe-kv1-att-interpolated/checkpoint_best.pt \
     --sample-break-mode complete --max-tokens 3072 \
-    --context-window 2560 --softmax-batch 1024 --model-overrides "{'interpolated_loss': False}" \
+    --context-window 2560 --softmax-batch 1024 \
+    --model-overrides "{'interpolated_loss': False, 'knn_keytype': 'last_ffn_input', 'use_last_ffn_input': True}" \
     --gen-subset valid --bpe subword_nmt --remove-bpe \
     --save-scores interpolated_loss_scores/kv1_att_interpolated_scores.npy
 
