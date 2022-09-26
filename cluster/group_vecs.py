@@ -14,7 +14,6 @@ keys_from_memmap = np.memmap('checkpoints/wikitext103-bpe/dstore_keys.npy',
 vals_from_memmap = np.memmap('checkpoints/wikitext103-bpe/dstore_vals.npy',
                              dtype=np.int64, mode='r', shape=(dstore_size, 1))
 
-
 keys = np.zeros((dstore_size, vec_dim), dtype=np.float16)
 vals = np.zeros((dstore_size, 1), dtype=np.int64)
 
@@ -24,6 +23,6 @@ del keys_from_memmap, vals_from_memmap
 
 vals = vals.squeeze()
 
-#exclude 0
+# exclude 0
 for word_id in tqdm.tqdm(range(1, len(dictionary))):
-    np.save('dstore/ids/' + str(word_id) + '.npy', keys[vals==word_id])
+    np.save('dstore/ids/' + str(word_id) + '.npy', keys[vals == word_id])

@@ -21,7 +21,6 @@ from fairseq.meters import StopwatchMeter, TimeMeter
 from fairseq.sequence_scorer import SequenceScorer
 from fairseq.knnlm import KNN_Dstore
 
-
 logging.basicConfig(
     format='%(asctime)s | %(levelname)s | %(name)s | %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
@@ -166,18 +165,24 @@ def main(parsed_args):
             print('keytype being saved:', args.knn_keytype)
             if args.dstore_fp16:
                 print('Saving fp16')
-                dstore_keys = np.memmap(args.dstore_mmap+'_keys.npy', dtype=np.float16, mode='w+', shape=(args.dstore_size, args.decoder_embed_dim))
-                dstore_vals = np.memmap(args.dstore_mmap+'_vals.npy', dtype=np.int64, mode='w+', shape=(args.dstore_size, 1))
+                dstore_keys = np.memmap(args.dstore_mmap + '_keys.npy', dtype=np.float16, mode='w+',
+                                        shape=(args.dstore_size, args.decoder_embed_dim))
+                dstore_vals = np.memmap(args.dstore_mmap + '_vals.npy', dtype=np.int64, mode='w+',
+                                        shape=(args.dstore_size, 1))
             else:
                 print('Saving fp32')
-                dstore_keys = np.memmap(args.dstore_mmap+'_keys.npy', dtype=np.float32, mode='w+', shape=(args.dstore_size, args.decoder_embed_dim))
-                dstore_vals = np.memmap(args.dstore_mmap+'_vals.npy', dtype=np.int64, mode='w+', shape=(args.dstore_size, 1))
+                dstore_keys = np.memmap(args.dstore_mmap + '_keys.npy', dtype=np.float32, mode='w+',
+                                        shape=(args.dstore_size, args.decoder_embed_dim))
+                dstore_vals = np.memmap(args.dstore_mmap + '_vals.npy', dtype=np.int64, mode='w+',
+                                        shape=(args.dstore_size, 1))
 
         dstore_idx = 0
 
         all_token_ids = []
         all_scores = []
         all_knn_scores = []
+        all_queries = []
+
         for ex_i, sample in enumerate(t):
             if 'net_input' not in sample:
                 continue
@@ -191,8 +196,7 @@ def main(parsed_args):
                 hypos = scorer.generate(models, sample)
             gen_timer.stop(sample['ntokens'])
 
-
-            for i, hypos_i in enumerate(hypos):
+            for idx, hypos_i in enumerate(hypos):
                 hypo = hypos_i[0]
                 if args.save_knnlm_dstore:
                     shape = hypo['dstore_keys'].shape
@@ -203,20 +207,20 @@ def main(parsed_args):
                             hypo['dstore_keys'] = hypo['dstore_keys'][:shape[0]]
                             hypo['tokens'] = hypo['tokens'][:shape[0]]
                         if args.dstore_fp16:
-                            dstore_keys[dstore_idx:shape[0]+dstore_idx] = hypo['dstore_keys'].view(
+                            dstore_keys[dstore_idx:shape[0] + dstore_idx] = hypo['dstore_keys'].view(
                                 -1, args.decoder_embed_dim).cpu().numpy().astype(np.float16)
-                            dstore_vals[dstore_idx:shape[0]+dstore_idx] = hypo['tokens'].view(
+                            dstore_vals[dstore_idx:shape[0] + dstore_idx] = hypo['tokens'].view(
                                 -1, 1).cpu().numpy().astype(np.int64)
                         else:
-                            dstore_keys[dstore_idx:shape[0]+dstore_idx] = hypo['dstore_keys'].view(
+                            dstore_keys[dstore_idx:shape[0] + dstore_idx] = hypo['dstore_keys'].view(
                                 -1, args.decoder_embed_dim).cpu().numpy().astype(np.float32)
-                            dstore_vals[dstore_idx:shape[0]+dstore_idx] = hypo['tokens'].view(
+                            dstore_vals[dstore_idx:shape[0] + dstore_idx] = hypo['tokens'].view(
                                 -1, 1).cpu().numpy().astype(np.int64)
                         dstore_idx += shape[0]
                     else:
                         print('Skipping this one with shape', shape)
 
-                sample_id = sample['id'][i]
+                sample_id = sample['id'][idx]
 
                 tokens = hypo['tokens']
                 tgt_len = tokens.numel()
@@ -225,6 +229,8 @@ def main(parsed_args):
                 if args.knnlm:
                     knn_scores = hypo['knn_probs'].float()
                     all_knn_scores.append(knn_scores.cpu().numpy())
+                    queries = hypo['queries'].float()
+                    all_queries.append(queries.cpu().numpy())
 
                 if args.add_bos_token:
                     assert hypo['tokens'][0].item() == task.target_dictionary.bos()
@@ -245,8 +251,8 @@ def main(parsed_args):
                             pos_scores[i + 1] += pos_scores[i]
                             pos_scores[i] = 0
 
-                #inf_scores = pos_scores.eq(float('inf')) | pos_scores.eq(float('-inf'))
-                #if inf_scores.any():
+                # inf_scores = pos_scores.eq(float('inf')) | pos_scores.eq(float('-inf'))
+                # if inf_scores.any():
                 #    logger.info(
                 #        'skipping tokens with inf scores:',
                 #        task.target_dictionary.string(tokens[inf_scores.nonzero()])
@@ -298,7 +304,7 @@ def main(parsed_args):
         gen_timer.n, gen_timer.sum, 1. / gen_timer.avg
     ))
     logger.info('Loss (base 2): {:.4f}, Perplexity: {:.2f}'.format(
-        avg_nll_loss, 2**avg_nll_loss
+        avg_nll_loss, 2 ** avg_nll_loss
     ))
 
     # saving
@@ -308,6 +314,8 @@ def main(parsed_args):
         np.save(parsed_args.save_scores, np.concatenate(all_scores))
     if all_knn_scores and parsed_args.save_knn_scores:
         np.save(parsed_args.save_knn_scores, np.concatenate(all_knn_scores))
+    if all_queries and parsed_args.save_queries:
+        np.save(parsed_args.save_queries, np.concatenate(all_queries))
 
     if args.output_word_stats:
         for ws in sorted(word_stats.values(), key=lambda x: x.count, reverse=True):

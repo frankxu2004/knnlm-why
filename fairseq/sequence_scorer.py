@@ -142,6 +142,8 @@ class SequenceScorer(object):
                     orig_target.permute(1, 0),
                     pad_idx=self.pad)
                 yhat_knn_prob = yhat_knn_prob.permute(1, 0, 2).squeeze(-1)
+                queries = queries.permute(1, 0, 2)
+
                 if self.args.fp16:
                     yhat_knn_prob = yhat_knn_prob.half()
                     probs = probs.half()
@@ -159,6 +161,7 @@ class SequenceScorer(object):
                     avg_attn = attn
                 else:
                     avg_attn.add_(attn)
+
         if len(models) > 1:
             avg_probs.div_(len(models))
             avg_probs.log_()
@@ -176,6 +179,7 @@ class SequenceScorer(object):
             avg_probs_i = avg_probs[i][start_idxs[i]:start_idxs[i] + tgt_len]
             if 'knn_dstore' in kwargs:
                 knn_probs_i = yhat_knn_prob[i][start_idxs[i]:start_idxs[i] + tgt_len]
+                queries_i = queries[i][start_idxs[i]:start_idxs[i] + tgt_len]
             score_i = avg_probs_i.sum() / tgt_len
             if avg_attn is not None:
                 avg_attn_i = avg_attn[i]
@@ -200,5 +204,6 @@ class SequenceScorer(object):
                 'dstore_keys': decoder_out[1][self.args.knn_keytype][start_idxs[i]:, i,
                                :] if self.args.save_knnlm_dstore else None,
                 'knn_probs': knn_probs_i if 'knn_dstore' in kwargs else None,
+                'queries': queries_i if 'knn_dstore' in kwargs else None,
             }])
         return hypos

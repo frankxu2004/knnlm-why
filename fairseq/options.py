@@ -536,6 +536,8 @@ def add_eval_lm_args(parser):
                         help='tokens npy file path to save')
     parser.add_argument('--save-knn-scores', type=str, default='',
                         help='knn scores npy file path to save')
+    parser.add_argument('--save-queries', type=str, default='',
+                        help='query vectors npy file path to save')
 
     # fmt: on
 
