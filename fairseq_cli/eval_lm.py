@@ -233,6 +233,7 @@ def main(parsed_args):
                     all_queries.append(queries.cpu().numpy())
 
                 if args.add_bos_token:
+                    exit('No BOS TOKEN')
                     assert hypo['tokens'][0].item() == task.target_dictionary.bos()
                     tokens = tokens[1:]
                     pos_scores = pos_scores[1:]
@@ -251,13 +252,6 @@ def main(parsed_args):
                             pos_scores[i + 1] += pos_scores[i]
                             pos_scores[i] = 0
 
-                # inf_scores = pos_scores.eq(float('inf')) | pos_scores.eq(float('-inf'))
-                # if inf_scores.any():
-                #    logger.info(
-                #        'skipping tokens with inf scores:',
-                #        task.target_dictionary.string(tokens[inf_scores.nonzero()])
-                #    )
-                #    pos_scores = pos_scores[(~inf_scores).nonzero()]
                 score_sum += pos_scores.sum().cpu()
                 count += pos_scores.numel() - skipped_toks
 

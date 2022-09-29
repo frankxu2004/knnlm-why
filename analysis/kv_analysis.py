@@ -105,9 +105,11 @@ extra_score_files = [
     '0.7_knn_recomp_scores.npy',
     '0.8_knn_recomp_scores.npy',
     '0.9_knn_recomp_scores.npy',
-    '0.05_knn_scores_2.npy',
-    '0.1_knn_scores_2.npy',
-    '0.2_knn_scores_2.npy',
+    'dstore_subsampled_0.05_real_mask.npy',
+    'dstore_subsampled_0.05_real_mask_fp32.npy',
+    'dstore_subsampled_0.05_faiss_mask.npy',
+    'dstore_subsampled_0.1_real_mask.npy',
+    'dstore_subsampled_0.1_faiss_mask.npy',
 ]
 
 # extra_score_files = [f'epoch_scores/3v-att-init-finetune-epoch{e}.npy' for e in range(1, 40)]
