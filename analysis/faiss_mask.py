@@ -6,13 +6,6 @@ import tqdm
 import faiss
 
 
-@torch.jit.script
-def my_cdist(x1, x2, x2_norm):
-    x1_norm = x1.pow(2).sum(dim=-1, keepdim=True)
-    res = torch.addmm(x2_norm.transpose(-2, -1), x1, x2.transpose(-2, -1), alpha=-2).add_(x1_norm)
-    return res
-
-
 topk = 1024
 dimension = 1024
 dstore_filename = "checkpoints/wikitext103-bpe/dstore_subsampled_0.05"

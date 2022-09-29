@@ -108,6 +108,7 @@ extra_score_files = [
     'dstore_subsampled_0.05_real_mask.npy',
     'dstore_subsampled_0.05_real_mask_fp32.npy',
     'dstore_subsampled_0.05_faiss_mask.npy',
+    'dstore_subsampled_0.05_faiss_mask_flat.npy',
     'dstore_subsampled_0.1_real_mask.npy',
     'dstore_subsampled_0.1_faiss_mask.npy',
 ]
