@@ -13,7 +13,7 @@ dstore_size = 7661274
 indexfile = "checkpoints/wikitext103-bpe/knn_subsampled_0.05.index"
 
 index = faiss.read_index(indexfile, faiss.IO_FLAG_ONDISK_SAME_DIR)
-index.nprobe = 32
+index.nprobe = 1024
 
 print('Loading tokens...')
 tokens = np.load('tokens.npy')
@@ -61,6 +61,6 @@ for batch_idx in tqdm.tqdm(range(num_batches)):
     all_dists.append(dists.sum(dim=-1).cpu().numpy())
 
 
-np.save(dstore_filename.split('/')[-1] + '_faiss_mask.npy', np.concatenate(all_probs))
-np.save(dstore_filename.split('/')[-1] + '_faiss_mask_knns.npy', np.concatenate(all_knns, axis=0))
-np.save(dstore_filename.split('/')[-1] + '_faiss_mask_dists.npy', np.concatenate(all_dists))
+np.save(dstore_filename.split('/')[-1] + '_faiss_mask_nprobe.npy', np.concatenate(all_probs))
+np.save(dstore_filename.split('/')[-1] + '_faiss_mask_nprobe_knns.npy', np.concatenate(all_knns, axis=0))
+np.save(dstore_filename.split('/')[-1] + '_faiss_mask_nprobe_dists.npy', np.concatenate(all_dists))
