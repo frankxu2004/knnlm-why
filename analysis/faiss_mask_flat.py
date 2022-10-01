@@ -47,6 +47,7 @@ num_batches = len(queries) // batch_size + 1
 
 all_probs = []
 all_knns = []
+all_dists = []
 
 for batch_idx in tqdm.tqdm(range(num_batches)):
     batch_queries = queries[batch_idx * batch_size:(batch_idx + 1) * batch_size]
@@ -60,7 +61,9 @@ for batch_idx in tqdm.tqdm(range(num_batches)):
     index_mask[index_mask == 1] = 0
     yhat_knn_prob = torch.logsumexp(probs + index_mask, dim=-1)
     all_probs.append(yhat_knn_prob.cpu().numpy())
+    all_dists.append(dists.sum(dim=-1).cpu().numpy())
 
 
 np.save(dstore_filename.split('/')[-1] + '_faiss_mask_flat_cpu.npy', np.concatenate(all_probs))
 np.save(dstore_filename.split('/')[-1] + '_faiss_mask_flat_cpu_knns.npy', np.concatenate(all_knns, axis=0))
+np.save(dstore_filename.split('/')[-1] + '_faiss_mask_flat_cpu_dists.npy', np.concatenate(all_dists))

@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 import tqdm
 import faiss
-
+import faiss.contrib.torch_utils
 
 topk = 1024
 dimension = 1024

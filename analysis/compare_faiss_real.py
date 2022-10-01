@@ -19,8 +19,8 @@ print('faiss brute force', np.mean(flat_dists)/1024)
 print(np.mean(real_dists/1024-flat_dists/1024))
 print(np.std(real_dists/1024-flat_dists/1024))
 
-real_knns = np.load('dstore_subsampled_0.05_real_mask_knns.npy')
-faiss_knns = np.load('dstore_subsampled_0.05_faiss_mask_flat_knns.npy')
+real_knns = np.load('dstore_subsampled_0.05_faiss_mask_flat_cpu_knns.npy')
+faiss_knns = np.load('dstore_subsampled_0.05_faiss_mask_flat_cpu_knns.npy')
 
 print(faiss_knns.shape)
 print(real_knns.shape)
